@@ -105,6 +105,14 @@ with **no model call**, producing identical output.
 Provider calls live behind a small `ModelClient` interface in one module, so
 another provider can be added without touching the loop.
 
+Other providers are reached through their Anthropic-compatible endpoint, set in
+`providers` in config (DeepSeek is configured). Each uses its own API key from
+its own environment variable; Anthropic credentials are never sent to it. Its
+requests drop `strict` from tools and repeat a tool error in the result text,
+because DeepSeek documents `is_error` as ignored. Results from another
+provider's model measure that model, so they are reported separately from
+Claude runs; the manifest records the provider.
+
 ---
 
 ## 5. Inputs
@@ -820,6 +828,12 @@ limits:
 prices_per_million_tokens:     # check current prices before relying on these
   claude-opus-5-5: {input: 4.00, output: 20.00}
   claude-sonnet-5-5: {input: 2.00, output: 10.00}
+  deepseek-flash: {input: 0.30, output: 1.20, provider: deepseek}
+  deepseek-v4-pro: {input: 1.32, output: 3.96, provider: deepseek}
+providers:
+  deepseek:
+    base_url: https://api.deepseek.com/anthropic
+    api_key_env: DEEPSEEK_API_KEY
 sandbox:
   image: study-onboarding-runner
   digest: sha256:REPLACE         # written by `onboard check-sandbox --build`

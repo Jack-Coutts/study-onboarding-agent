@@ -8,9 +8,12 @@ Anthropic API without touching the loop.
 from __future__ import annotations
 
 import copy
+import os
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Protocol, cast
+
+from onboard.config import Config, ConfigError
 
 # Cache pricing relative to the input price: writes with the default 5-minute
 # TTL cost 1.25x, reads 0.1x.
@@ -67,14 +70,42 @@ class ModelClient(Protocol):
 
 
 class AnthropicClient:
-    """Calls the Messages API directly, with no agent framework."""
+    """Calls the Messages API directly, with no agent framework.
 
-    def __init__(self, client: Any = None) -> None:
+    compatible=True adapts requests for another provider's Anthropic-compatible
+    endpoint. DeepSeek's documents `is_error` on tool results as ignored and do not
+    list `strict`, so errors are also stated in the result text and `strict` is
+    dropped; the harness validates every tool argument itself either way. The
+    harness's own history is never changed: the adapted copy is built per request.
+    """
+
+    def __init__(self, client: Any = None, compatible: bool = False) -> None:
         if client is None:
             import anthropic
 
             client = anthropic.Anthropic()
         self.client = client
+        self.compatible = compatible
+
+    def _adapt(
+        self, tools: list[dict[str, Any]], messages: list[dict[str, Any]]
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        tools = copy.deepcopy(tools)
+        if tools:
+            tools[-1]["cache_control"] = {"type": "ephemeral"}
+        if not self.compatible:
+            return tools, messages
+        for tool in tools:
+            tool.pop("strict", None)
+        adapted = copy.deepcopy(messages)
+        for message in adapted:
+            content = message.get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if block.get("type") == "tool_result" and block.get("is_error"):
+                    block["content"] = f"Error: {block['content']}"
+        return tools, adapted
 
     def create(
         self,
@@ -86,18 +117,16 @@ class AnthropicClient:
         max_tokens: int,
         effort: str,
     ) -> ModelResponse:
-        cached_tools = copy.deepcopy(tools)
-        if cached_tools:
-            cached_tools[-1]["cache_control"] = {"type": "ephemeral"}
+        sent_tools, sent_messages = self._adapt(tools, messages)
         started = time.monotonic()
         # Thinking stays at the model's adaptive default; effort is set explicitly.
         response = self.client.messages.create(
             model=model,
             max_tokens=max_tokens,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            tools=cached_tools,
+            tools=sent_tools,
             tool_choice={"type": "auto"},
-            messages=messages,
+            messages=sent_messages,
             output_config={"effort": effort},
         )
         seconds = time.monotonic() - started
@@ -120,6 +149,26 @@ class AnthropicClient:
             seconds=seconds,
             stop_details=stop_details.model_dump(mode="json") if stop_details else None,
         )
+
+
+def client_for(config: Config) -> AnthropicClient:
+    """The client for config.model: the Anthropic API, or the model's provider."""
+    provider = config.provider(config.model)
+    if provider is None:
+        return AnthropicClient()
+    key = os.environ.get(provider.api_key_env)
+    if not key:
+        raise ConfigError(f"{config.model} needs {provider.api_key_env} set in the environment")
+    if os.environ.get("ANTHROPIC_CUSTOM_HEADERS"):
+        # The SDK adds these headers to every request, so they would go to the provider.
+        raise ConfigError(f"unset ANTHROPIC_CUSTOM_HEADERS before calling {provider.name}")
+    import anthropic
+
+    # An explicit key stops the SDK reading ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN,
+    # so Anthropic credentials are never sent to another provider.
+    return AnthropicClient(
+        anthropic.Anthropic(api_key=key, base_url=provider.base_url), compatible=True
+    )
 
 
 @dataclass

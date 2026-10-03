@@ -26,10 +26,23 @@ class Limits:
     sandbox_seconds: int
 
 
+ANTHROPIC = "anthropic"
+
+
 @dataclass(frozen=True)
 class Price:
     input: float
     output: float
+    provider: str = ANTHROPIC
+
+
+@dataclass(frozen=True)
+class Provider:
+    """A non-Anthropic provider reached through its Anthropic-compatible endpoint."""
+
+    name: str
+    base_url: str
+    api_key_env: str
 
 
 @dataclass(frozen=True)
@@ -50,6 +63,7 @@ class Config:
     max_tokens: int
     limits: Limits
     prices: dict[str, Price]
+    providers: dict[str, Provider]
     sandbox: SandboxConfig
     runs_per_task: int
     path: Path
@@ -61,6 +75,16 @@ class Config:
             raise ConfigError(
                 f"no price for model {model!r} in prices_per_million_tokens"
             ) from None
+
+    def provider(self, model: str) -> Provider | None:
+        """None for the Anthropic API; otherwise the provider that serves the model."""
+        name = self.price(model).provider
+        if name == ANTHROPIC:
+            return None
+        try:
+            return self.providers[name]
+        except KeyError:
+            raise ConfigError(f"model {model!r} names unknown provider {name!r}") from None
 
     def with_overrides(self, model: str | None = None, effort: str | None = None) -> Config:
         values = dict(self.__dict__)
@@ -75,6 +99,8 @@ class Config:
     def check(self) -> None:
         if self.effort not in EFFORTS:
             raise ConfigError(f"effort must be one of {EFFORTS}, not {self.effort!r}")
+        for model in self.prices:
+            self.provider(model)
         self.price(self.model)
 
 
@@ -102,8 +128,20 @@ def load_config(path: Path = DEFAULT_CONFIG) -> Config:
                 sandbox_seconds=int(limits["sandbox_seconds"]),
             ),
             prices={
-                str(name): Price(input=float(p["input"]), output=float(p["output"]))
+                str(name): Price(
+                    input=float(p["input"]),
+                    output=float(p["output"]),
+                    provider=str(p.get("provider", ANTHROPIC)),
+                )
                 for name, p in prices.items()
+            },
+            providers={
+                str(name): Provider(
+                    name=str(name),
+                    base_url=str(p["base_url"]),
+                    api_key_env=str(p["api_key_env"]),
+                )
+                for name, p in _mapping(raw.get("providers", {}), "providers").items()
             },
             sandbox=SandboxConfig(image=str(sandbox["image"]), digest=str(sandbox["digest"])),
             runs_per_task=int(_mapping(raw.get("eval", {}), "eval").get("runs_per_task", 1)),

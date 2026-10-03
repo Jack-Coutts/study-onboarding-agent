@@ -78,7 +78,17 @@ uv run onboard replay runs/<run-id>    # re-drive a run from its log, no API cal
 uv run onboard eval                    # runs on tasks/R*.yaml plus hidden checks
 ```
 
-A live run costs roughly $0.50-$1.50 at the default limits in `config.yaml`.
+A live run with Claude Opus 5.5 costs roughly $0.50-$1.50 at the default
+limits in `config.yaml`. For cheap trial runs, DeepSeek's models work through
+their Anthropic-compatible API, with their own key:
+
+```bash
+export DEEPSEEK_API_KEY=...
+uv run onboard run fixtures/dev/D1/task.yaml --model deepseek-flash
+```
+
+Results from another provider measure that provider's model, not Claude, so
+keep them apart from Claude runs when reporting.
 Each run writes `runs/<run-id>/` with the manifest, log, every version, and a
 report. A passed run is also copied to `studies/<ST>/`.
 

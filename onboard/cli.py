@@ -35,7 +35,7 @@ def _check_sandbox(args: argparse.Namespace) -> int:
 
 
 def _run(args: argparse.Namespace) -> int:
-    from onboard.model_client import AnthropicClient
+    from onboard.model_client import client_for
     from onboard.run import run_task
     from onboard.sandbox import docker_sandbox, require_check
     from onboard.task import resolve_task
@@ -43,14 +43,14 @@ def _run(args: argparse.Namespace) -> int:
     config = load_config(args.config).with_overrides(model=args.model, effort=args.effort)
     sandbox = docker_sandbox(config)
     require_check(config.sandbox.digest)
-    result = run_task(resolve_task(args.task), config, AnthropicClient(), sandbox)
+    result = run_task(resolve_task(args.task), config, client_for(config), sandbox)
     print(f"{result.run_dir}: {result.outcome.status}. {result.outcome.reason}")
     return 0 if result.outcome.status == "passed" else 1
 
 
 def _eval(args: argparse.Namespace) -> int:
     from onboard.evaluate import evaluate, safe_hidden_checks, write_results
-    from onboard.model_client import AnthropicClient
+    from onboard.model_client import client_for
     from onboard.sandbox import docker_sandbox, require_check
 
     tasks = sorted((ROOT / "tasks").glob("R*.yaml"))
@@ -60,14 +60,15 @@ def _eval(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
-    config = load_config(args.config)
+    config = load_config(args.config).with_overrides(model=args.model, effort=args.effort)
     sandbox = docker_sandbox(config)
     require_check(config.sandbox.digest)
     if args.runs:
         results = [safe_hidden_checks(Path(run), sandbox) for run in args.runs]
         path = write_results(results, ["Hidden checks on existing runs; no new runs."])
     else:
-        path = evaluate(tasks, config, AnthropicClient, sandbox)
+        client_for(config)  # fail before any run if the provider's key is missing
+        path = evaluate(tasks, config, lambda: client_for(config), sandbox)
     print(f"wrote {path}")
     return 0
 
@@ -129,6 +130,8 @@ def main(argv: list[str] | None = None) -> int:
     run.set_defaults(handler=_run)
 
     evaluation = commands.add_parser("eval", help="runs on R1-R3 plus hidden checks")
+    evaluation.add_argument("--model")
+    evaluation.add_argument("--effort")
     evaluation.add_argument("--runs", nargs="+", help="only run hidden checks on these runs")
     evaluation.set_defaults(handler=_eval)
 

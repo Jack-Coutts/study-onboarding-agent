@@ -87,6 +87,8 @@ def test_a_passed_run_leaves_a_complete_run_directory(tmp_path):
     assert manifest["status"] == "passed"
     assert manifest["accepted_version"] == "v1"
     assert manifest["model"] == {
+        "provider": "anthropic",
+        "base_url": None,
         "requested": "claude-opus-5-5",
         "served": ["claude-opus-5-5"],
         "effort": "high",

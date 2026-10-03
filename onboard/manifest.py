@@ -80,6 +80,10 @@ def new_manifest(
         "prompt_sha256": sha256_bytes((system_prompt + "\n\n" + task_prompt).encode()),
         "tools_sha256": sha256_json(TOOL_DEFINITIONS),
         "model": {
+            "provider": provider.name
+            if (provider := config.provider(config.model))
+            else "anthropic",
+            "base_url": provider.base_url if provider else None,
             "requested": config.model,
             "served": [],
             "effort": config.effort,
