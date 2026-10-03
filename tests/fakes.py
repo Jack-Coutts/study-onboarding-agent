@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import itertools
+from collections.abc import Callable
 from contextlib import redirect_stderr
 from pathlib import Path
 from typing import Any
@@ -67,7 +68,12 @@ def _load_variant(variant: str) -> Any:
 class FakeSandbox:
     image = "sha256:fake"
 
-    def __init__(self, variant: str | None = None, tests_pass: bool = True, timeout: bool = False):
+    def __init__(
+        self,
+        variant: str | None = None,
+        tests_pass: bool | Callable[[Path], bool] = True,
+        timeout: bool = False,
+    ):
         self.module = workbench_rest if variant is None else _load_variant(variant)
         self.tests_pass = tests_pass
         self.timeout = timeout
@@ -94,7 +100,8 @@ class FakeSandbox:
         return Execution(code, "", stderr.getvalue(), 0.1, False)
 
     def run_tests(self, code_dir: Path) -> Execution:
-        if self.tests_pass:
+        passes = self.tests_pass(code_dir) if callable(self.tests_pass) else self.tests_pass
+        if passes:
             return Execution(0, "3 passed in 0.1s\n", "", 0.2, False)
         out = "___ test_ids ___\nassert '1' == '01'\n1 failed, 2 passed in 0.1s\n"
         return Execution(1, out, "", 0.2, False)

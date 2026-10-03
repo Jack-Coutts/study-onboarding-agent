@@ -184,3 +184,84 @@ def test_contract_rejects_each_rule_violation(fixture_id, mutate, rule, tmp_path
     assert check(fixture, output) == []
     mutate(output)
     assert rule in check(fixture, output)
+
+
+def _deposit(tmp_path: Path, factors: dict[str, str], names: list[str], task: str) -> Fixture:
+    directory = tmp_path / "deposit"
+    directory.mkdir()
+    (directory / "factors.json").write_text(
+        json.dumps(
+            {
+                str(i): {"local_sample_id": s, "factors": f}
+                for i, (s, f) in enumerate(factors.items(), 1)
+            }
+        )
+    )
+    data = {
+        str(i): {"analysis_id": "AN1", "metabolite_name": name, "DATA": {s: "1" for s in factors}}
+        for i, name in enumerate(names, 1)
+    }
+    (directory / "data.json").write_text(json.dumps(data))
+    (directory / "task.yaml").write_text(task)
+    return Fixture(id="tmp", split="dev", directory=directory)
+
+
+def test_reference_output_with_numbered_metadata_names_is_accepted(tmp_path):
+    fixture = _deposit(
+        tmp_path,
+        {"A": "Diagnosis:x | Phenotype:old label | Samples:3", "B": "Diagnosis:y"},
+        ["Batch", "Phenotype.1", "Valine"],
+        "phenotype_key: Diagnosis\n",
+    )
+    output = reference_output(fixture, tmp_path)
+    header = (output / "prepared.csv").read_text().splitlines()[0].split(",")
+    assert header[:7] == [
+        "Samples",
+        "Phenotype",
+        "Phenotype.2",
+        "Samples.1",
+        "Sample type",
+        "Batch",
+        "Injection order",
+    ]
+    assert header[7:] == ["Batch.1", "Phenotype.1", "Valine"]
+    assert check(fixture, output) == []
+
+
+def test_contract_rejects_a_misnumbered_feature_name(tmp_path):
+    fixture = _deposit(tmp_path, {"A": "G:x"}, ["Batch", "Valine"], "phenotype_key: G\n")
+    output = reference_output(fixture, tmp_path)
+    rewrite_csv(output / "prepared.csv", lambda grid: grid[0].__setitem__(5, "Batch_2"))
+    assert "feature_names" in check(fixture, output)
+
+
+def test_factors_naming_one_technical_column_twice_must_stop(tmp_path):
+    fixture = _deposit(tmp_path, {"A": "G:x | Batch:1 | batch:2"}, ["Valine"], "phenotype_key: G\n")
+    with pytest.raises(ConversionError, match="Batch"):
+        reference_output(fixture, tmp_path)
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert check(fixture, empty) == []
+    (empty / "prepared.csv").write_text("Samples\n")
+    assert check(fixture, empty) == ["conflicts"]
+
+
+def test_unreadable_output_is_a_violation_not_a_crash(tmp_path):
+    fixture = BY_ID["D1"]
+    output = reference_output(fixture, tmp_path)
+    (output / "prepared.csv").write_bytes(b"\xff\xfe\x00bad")
+    (output / "summary.json").write_bytes(b"\xff")
+    assert check(fixture, output) == ["files", "files"]
+
+
+@pytest.mark.parametrize(
+    ("header", "pandas_columns"),
+    [
+        (["a", "a", "a.1", "a.1", "a"], ["a", "a.2", "a.1", "a.1.1", "a.3"]),
+        (["x.1", "x", "x", "x.1"], ["x.1", "x", "x.2", "x.1.1"]),
+    ],
+)
+def test_contract_numbers_headers_as_pandas_does(header, pandas_columns):
+    from contract.input_contract import number_like_pandas
+
+    assert number_like_pandas(header) == pandas_columns

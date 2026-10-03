@@ -96,7 +96,9 @@ Rules:
     first keeps its name, and later copies become `name.1`, `name.2`, ...,
     skipping any number whose result is already a name in the header row. The
     whole header row, including metadata columns, is numbered together.
-12. A cell is the deposit's value for that sample, as text. A blank value, or a
+12. Write only the three output files, as regular files directly in
+    `output_dir`. Links and subdirectories are ignored.
+13. A cell is the deposit's value for that sample, as text. A blank value, or a
     sample missing from that metabolite's `DATA` while measured in the
     analysis, is written blank.
 
@@ -150,5 +152,6 @@ qc_sample_types: [<distinct Sample type values of the kept controls>]
 fixtures, checks the output against the contract, compares the fixtures with
 their expected outputs, and runs your tests. If the deposit cannot be converted
 without a human decision (for example, the phenotype key is absent, or records
-conflict), finish with `needs_review` and explain. Excluded samples are a
+conflict), finish with `needs_review` and explain. `finish` must name a
+submitted version, so submit your converter first even then. Excluded samples are a
 normal result, not a reason for `needs_review`.

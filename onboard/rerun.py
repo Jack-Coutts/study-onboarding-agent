@@ -44,7 +44,8 @@ def rerun(directory: Path, sandbox: Sandbox | None = None, root: Path = ROOT) ->
     if not manifest.get("accepted_version"):
         return [Step("accepted converter", False, "this run has no accepted converter")]
     study_id, task_path = manifest["task"]["study_id"], manifest["task"]["path"]
-    sandbox = sandbox or DockerSandbox(manifest["sandbox"]["digest"], SANDBOX_SECONDS)
+    seconds = manifest.get("limits", {}).get("sandbox_seconds", SANDBOX_SECONDS)
+    sandbox = sandbox or DockerSandbox(manifest["sandbox"]["digest"], seconds)
     code_source = directory / "accepted" if (directory / "accepted").is_dir() else directory
 
     expected = {entry["path"]: entry["sha256"] for entry in manifest["inputs"]}

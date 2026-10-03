@@ -61,9 +61,11 @@ class Violation:
 class Deposit:
     samples: dict[str, dict[str, str]]
     conflicts: list[str]
+    ambiguous_technical: list[str]
     analyses: list[str]
     measured: dict[str, set[str]]
     features_per_analysis: dict[str, int]
+    feature_names: list[str]
     phenotype_key: str
     rename: dict[str, str]
     keep: list[str] | None
@@ -75,6 +77,11 @@ class Deposit:
         reserved = {self.phenotype_key, *(k for k in self.technical_keys.values() if k)}
         keys = {key for factors in self.samples.values() for key in factors}
         return sorted(keys - reserved)
+
+    @property
+    def expected_header(self) -> list[str]:
+        metadata = [SAMPLES, PHENOTYPE, *self.extra_keys, *TECHNICAL]
+        return number_like_pandas(metadata + self.feature_names)
 
     def sample_type(self, sample: str) -> str:
         key = self.technical_keys["Sample type"]
@@ -119,6 +126,25 @@ def _factors(text: str) -> dict[str, str]:
     return factors
 
 
+def number_like_pandas(names: list[str]) -> list[str]:
+    """Header names as pandas 3 `read_csv` (C parser) reads a row with repeats.
+
+    Later copies become name.1, name.2, ..., skipping any result already in the row.
+    """
+    numbered = list(names)
+    seen: dict[str, int] = {}
+    for i, name in enumerate(numbered):
+        column = name
+        count = seen.get(column, 0)
+        while count > 0:
+            seen[name] = count + 1
+            column = f"{name}.{count}"
+            count = count + 1 if column in numbered else seen.get(column, 0)
+        numbered[i] = column
+        seen[column] = count + 1
+    return numbered
+
+
 def _name(record: dict[str, Any]) -> str:
     for key in ("metabolite_name", "refmet_name"):
         if _text(record.get(key)).strip():
@@ -143,6 +169,7 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     measured: dict[str, set[str]] = {a: set() for a in analyses}
     owner: dict[str, str] = {}
     features: Counter[str] = Counter()
+    names: list[str] = []
     for analysis in analyses:
         for record in data:
             if _text(record.get("analysis_id")) != analysis:
@@ -152,19 +179,25 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
             if name and owner.setdefault(name, analysis) != analysis:
                 continue
             features[analysis] += 1
+            names.append(name or "unnamed")
 
     keys = {key for factors in samples.values() for key in factors}
     technical: dict[str, str | None] = {}
+    ambiguous = []
     for column in TECHNICAL:
-        matches = [k for k in keys if k.casefold() == column.casefold()]
+        matches = sorted(k for k in keys if k.casefold() == column.casefold())
         technical[column] = matches[0] if len(matches) == 1 else None
+        if len(matches) > 1:
+            ambiguous += matches
     keep = task.get("keep")
     return Deposit(
         samples=samples,
         conflicts=sorted(set(conflicts)),
+        ambiguous_technical=ambiguous,
         analyses=analyses,
         measured=measured,
         features_per_analysis=dict(features),
+        feature_names=names,
         phenotype_key=str(task.get("phenotype_key", "")),
         rename={str(k): str(v) for k, v in (task.get("map") or {}).items()},
         keep=[str(k) for k in keep] if keep is not None else None,
@@ -178,16 +211,18 @@ def check_contract(
 ) -> list[Violation]:
     """Every rule in spec section 6 that the output breaks for this deposit."""
     deposit = load_deposit(factors_json, data_json, task_yaml)
-    if deposit.conflicts:
-        if (output_dir / "prepared.csv").exists():
-            return [
-                Violation(
-                    "conflicts",
-                    f"samples {deposit.conflicts} have conflicting factor records; the "
-                    "converter must stop with an error naming them, not write output",
-                )
-            ]
-        return []
+    if deposit.conflicts or deposit.ambiguous_technical:
+        if not (output_dir / "prepared.csv").exists():
+            return []
+        if deposit.conflicts:
+            detail = f"samples {deposit.conflicts} have conflicting factor records"
+        else:
+            detail = f"factors {deposit.ambiguous_technical} all name one technical column"
+        return [
+            Violation(
+                "conflicts", f"{detail}; the converter must stop with an error, not write output"
+            )
+        ]
     files = _load_outputs(output_dir)
     if isinstance(files, list):
         return files
@@ -204,18 +239,22 @@ def _load_outputs(
             problems.append(Violation("files", f"{name} was not written"))
     if problems:
         return problems
-    with (output_dir / "prepared.csv").open(newline="", encoding="utf-8") as handle:
-        grid = [list(row) for row in csv.reader(handle)]
+    grid: list[list[str]] = []
     summary: Any = None
     config: Any = None
     try:
+        with (output_dir / "prepared.csv").open(newline="", encoding="utf-8") as handle:
+            grid = [list(row) for row in csv.reader(handle)]
+    except (UnicodeDecodeError, csv.Error) as error:
+        problems.append(Violation("files", f"prepared.csv is not a UTF-8 CSV: {error}"))
+    try:
         summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
-        problems.append(Violation("files", f"summary.json is not valid JSON: {error}"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        problems.append(Violation("files", f"summary.json is not valid UTF-8 JSON: {error}"))
     try:
         config = yaml.safe_load((output_dir / "config.yaml").read_text(encoding="utf-8"))
-    except yaml.YAMLError as error:
-        problems.append(Violation("files", f"config.yaml is not valid YAML: {error}"))
+    except (UnicodeDecodeError, yaml.YAMLError) as error:
+        problems.append(Violation("files", f"config.yaml is not valid UTF-8 YAML: {error}"))
     if problems:
         return problems
     if not isinstance(summary, dict):
@@ -261,19 +300,32 @@ class _Checker:
     def n_metadata(self) -> int:
         return 2 + len(self.deposit.extra_keys) + len(TECHNICAL)
 
-    def column(self, name: str) -> int:
-        return self.header.index(name)
+    # Metadata columns by position: their names may be numbered (a factor called
+    # "Phenotype" is written as "Phenotype.1"), so they are not looked up by name.
+    PHENOTYPE_AT = 1
+
+    def extra_at(self, key: str) -> int:
+        return 2 + self.deposit.extra_keys.index(key)
+
+    def technical_at(self, column: str) -> int:
+        return 2 + len(self.deposit.extra_keys) + TECHNICAL.index(column)
 
     def check_layout(self) -> bool:
-        expected = [SAMPLES, PHENOTYPE, *self.deposit.extra_keys, *TECHNICAL]
+        expected = self.deposit.expected_header
+        n = self.n_metadata
         ok = True
-        if self.header[: self.n_metadata] != expected:
+        if self.header[:n] != expected[:n]:
             self.fail(
                 "layout",
-                f"row 1 must start {expected} (extra factor columns sorted by name), "
-                f"got {self.header[: self.n_metadata]}",
+                f"row 1 must start {expected[:n]} (extra factor columns sorted by name, "
+                f"repeated names numbered), got {self.header[:n]}",
             )
             ok = False
+        if self.header[n:] != expected[n:]:
+            self.fail(
+                "feature_names",
+                f"metabolite columns must be named {expected[n:]}, got {self.header[n:]}",
+            )
         repeated = sorted(n for n, c in Counter(self.header).items() if c > 1)
         if repeated:
             self.fail("unique_names", f"header names {repeated} appear more than once")
@@ -313,7 +365,7 @@ class _Checker:
 
     def check_cells(self) -> None:
         d = self.deposit
-        phenotype, sample_type = self.column(PHENOTYPE), self.column("Sample type")
+        phenotype, sample_type = self.PHENOTYPE_AT, self.technical_at("Sample type")
         for row in self.rows:
             if len(row) != len(self.header) or row[0] not in d.samples:
                 continue
@@ -344,7 +396,7 @@ class _Checker:
             for column in ("Batch", "Injection order"):
                 key = d.technical_keys[column]
                 want = d.samples[sample].get(key, "") if key else ""
-                got = row[self.column(column)]
+                got = row[self.technical_at(column)]
                 if got != want:
                     source = f"factor {key!r}" if key else "nothing: the deposit has no such factor"
                     self.fail(
@@ -352,7 +404,7 @@ class _Checker:
                         f"sample {sample!r} {column} must be {want!r}, from {source}; got {got!r}",
                     )
             for key in d.extra_keys:
-                if row[self.column(key)] != d.samples[sample].get(key, ""):
+                if row[self.extra_at(key)] != d.samples[sample].get(key, ""):
                     self.fail("extra_factors", f"sample {sample!r} column {key!r} must match")
 
     def check_features(self) -> None:
@@ -398,7 +450,7 @@ class _Checker:
             return
         n_features = len(self.header) - self.n_metadata
         tech = self.deposit.technical_keys
-        phenotype = self.header.index(PHENOTYPE) if PHENOTYPE in self.header else 1
+        phenotype = self.PHENOTYPE_AT
         counts = Counter(row[phenotype] for row in self.rows if len(row) > phenotype)
         counts.pop("", None)
         expected = {
@@ -423,7 +475,7 @@ class _Checker:
         for key, value in want.items():
             if self.config.get(key, object()) != value:
                 self.fail("config", f"config.yaml {key} must be {value!r}")
-        sample_type = self.column("Sample type")
+        sample_type = self.technical_at("Sample type")
         present = {row[sample_type] for row in self.rows if len(row) > sample_type} - {SUBJECT}
         got = self.config.get("qc_sample_types")
         if not isinstance(got, list) or set(got) != present:

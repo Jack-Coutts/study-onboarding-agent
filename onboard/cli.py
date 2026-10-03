@@ -49,7 +49,7 @@ def _run(args: argparse.Namespace) -> int:
 
 
 def _eval(args: argparse.Namespace) -> int:
-    from onboard.evaluate import evaluate, hidden_checks, write_results
+    from onboard.evaluate import evaluate, safe_hidden_checks, write_results
     from onboard.model_client import AnthropicClient
     from onboard.sandbox import docker_sandbox, require_check
 
@@ -64,7 +64,7 @@ def _eval(args: argparse.Namespace) -> int:
     sandbox = docker_sandbox(config)
     require_check(config.sandbox.digest)
     if args.runs:
-        results = [hidden_checks(Path(run), sandbox) for run in args.runs]
+        results = [safe_hidden_checks(Path(run), sandbox) for run in args.runs]
         path = write_results(results, ["Hidden checks on existing runs; no new runs."])
     else:
         path = evaluate(tasks, config, AnthropicClient, sandbox)
@@ -73,8 +73,11 @@ def _eval(args: argparse.Namespace) -> int:
 
 
 def _rerun(args: argparse.Namespace) -> int:
+    from onboard.manifest import read_manifest
     from onboard.rerun import rerun
+    from onboard.sandbox import require_check
 
+    require_check(read_manifest(Path(args.directory))["sandbox"]["digest"])
     steps = rerun(Path(args.directory))
     for step in steps:
         print(f"{'pass' if step.ok else 'FAIL'}  {step.name}: {step.detail}")

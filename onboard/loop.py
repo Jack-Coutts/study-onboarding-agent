@@ -190,7 +190,14 @@ class AgentLoop:
                 f"finish(needs_review) on {claim.version_id}: {claim.summary}",
                 finish=claim,
             )
-        validation = self.recheck(claim.version_id)
+        try:
+            validation = self.recheck(claim.version_id)
+        except Exception as error:
+            return self.end(
+                "failed",
+                f"finish(complete) on {claim.version_id}, but the re-run raised {error!r}",
+                finish=claim,
+            )
         self.log.write("recheck", version_id=claim.version_id, validation=validation)
         if validation.get("overall") == "ok":
             return self.end(

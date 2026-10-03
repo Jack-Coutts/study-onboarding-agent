@@ -37,7 +37,11 @@ def _normalise(value: Any, ordered: bool) -> Any:
 
 
 def diff_prepared(actual: Path, expected: Path) -> list[str]:
-    got, want = read_grid(actual), read_grid(expected)
+    want = read_grid(expected)
+    try:
+        got = read_grid(actual)
+    except (UnicodeDecodeError, csv.Error) as error:
+        return [f"prepared.csv is not a UTF-8 CSV: {error}"]
     if len(want) < 2:
         raise ValueError(f"{expected} has fewer than two rows")
     if len(got) < 2:
@@ -105,7 +109,7 @@ def _diff_mapping(name: str, got: Any, want: dict[str, Any], ordered: frozenset[
 def diff_summary(actual: Path, expected: Path) -> list[str]:
     try:
         got = json.loads(actual.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as error:
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
         return [f"summary.json is not valid JSON: {error}"]
     want = json.loads(expected.read_text(encoding="utf-8"))
     return _diff_mapping("summary.json", got, want, ORDERED_SUMMARY_LISTS)
@@ -114,7 +118,7 @@ def diff_summary(actual: Path, expected: Path) -> list[str]:
 def diff_config(actual: Path, expected: Path) -> list[str]:
     try:
         got = yaml.safe_load(actual.read_text(encoding="utf-8"))
-    except yaml.YAMLError as error:
+    except (UnicodeDecodeError, yaml.YAMLError) as error:
         return [f"config.yaml is not valid YAML: {error}"]
     want = yaml.safe_load(expected.read_text(encoding="utf-8"))
     return _diff_mapping("config.yaml", got, want, frozenset())
@@ -159,7 +163,11 @@ def compare_result(exit_code: int, stderr: str, output_dir: Path, expected_dir: 
 
 def cell_agreement(actual: Path, expected: Path) -> tuple[int, int]:
     """Matching data cells out of all expected data cells, aligned on sample and column."""
-    got, want = read_grid(actual), read_grid(expected)
+    want = read_grid(expected)
+    try:
+        got = read_grid(actual)
+    except (UnicodeDecodeError, csv.Error, FileNotFoundError):
+        got = []
     if not want:
         return 0, 0
     header = want[0]

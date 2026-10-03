@@ -123,7 +123,10 @@ def run_fixture(
     if execution.timed_out:
         return Check(False, {"execution": execution.summary(), "diff": []}), execution
     exit_code = execution.exit_code if execution.exit_code is not None else -1
-    diffs = compare_result(exit_code, execution.stderr, output, fixture.expected)
+    try:
+        diffs = compare_result(exit_code, execution.stderr, output, fixture.expected)
+    except Exception as error:  # a malformed output must fail the check, not the run
+        diffs = [f"the output could not be compared: {type(error).__name__}: {error}"]
     details: dict[str, Any] = {"diff": diffs}
     if diffs:
         details["execution"] = execution.summary()
@@ -172,13 +175,19 @@ def development_checks(
     checks["execution"] = execution_check(execution).as_dict()
 
     if execution.ok:
-        violations = check_contract(
-            task_output,
-            task_inputs / "factors.json",
-            task_inputs / "data.json",
-            task_inputs / "task.yaml",
-        )
-        checks["contract"] = Check(not violations, {"violations": [str(v) for v in violations]})
+        try:
+            violations = [
+                str(v)
+                for v in check_contract(
+                    task_output,
+                    task_inputs / "factors.json",
+                    task_inputs / "data.json",
+                    task_inputs / "task.yaml",
+                )
+            ]
+        except Exception as error:  # a malformed output must fail the check, not the run
+            violations = [f"the contract could not be checked: {type(error).__name__}: {error}"]
+        checks["contract"] = Check(not violations, {"violations": violations})
     else:
         checks["contract"] = Check(False, {"violations": ["not checked: the converter failed"]})
     checks["contract"] = checks["contract"].as_dict()

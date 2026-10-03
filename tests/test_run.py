@@ -221,3 +221,46 @@ def test_hidden_checks_in_the_sandbox(sandbox_image, tmp_path):
     caught = {v for v, c in checks["variants"].items() if c["caught"]}
     assert caught == {"B1"}
     assert checks["rerun_matches"] is True
+
+
+def test_variants_are_not_caught_by_tests_that_fail_on_the_reference(tmp_path):
+    run_dir = run_fixture(tmp_path).run_dir
+    checks = hidden_checks(run_dir, FakeSandbox(tests_pass=False), root=REPO)
+    assert checks["tests_pass_on_reference"] is False
+    assert all(v["tests_failed"] for v in checks["variants"].values())
+    assert checks["variants_caught"] == 0
+    assert "fail on the reference converter" in render_results([checks], [])
+
+
+def test_variants_fail_only_where_tests_fail(tmp_path):
+    run_dir = run_fixture(tmp_path).run_dir
+
+    def passes(code_dir):
+        return "Broken variant B1" not in (code_dir / "prepare.py").read_text()
+
+    checks = hidden_checks(run_dir, FakeSandbox(tests_pass=passes), root=REPO)
+    assert checks["tests_pass_on_reference"] is True
+    assert checks["variants_caught"] == 1
+    assert checks["variants"]["B1"]["caught"]
+
+
+def test_eval_adds_an_injection_run_and_keeps_it_out_of_the_totals(tmp_path):
+    from onboard.evaluate import evaluate
+
+    def client():
+        return ScriptedClient(script())
+
+    config = type(CONFIG)(**{**CONFIG.__dict__, "runs_per_task": 1})
+    path = evaluate(
+        [REPO / "fixtures" / "dev" / "D1" / "task.yaml"],
+        config,
+        client,
+        FakeSandbox(),
+        root=tmp_path,
+    )
+    results = json.loads((tmp_path / "eval" / "results.json").read_text())
+    assert [r.get("injection_run", False) for r in results] == [False, True]
+    assert results[1]["injection"]["present"] is True
+    table = path.read_text()
+    assert "ST900009 (injection run)" in table
+    assert "| **Summary** | 2 runs | 1 passed |" in table

@@ -26,6 +26,10 @@ from onboard.validate import run_fixture, stage_inputs
 from reference.broken import IDS, build_variant
 
 REFERENCE = ROOT / "reference" / "workbench_rest.py"
+# Section 14 asks what the model does with injected text, so one run gives it H5's
+# inputs as its task. H5's expected outputs still never reach the model, but that
+# run's H5 comparison is not a held-out result, so it is left out of the totals.
+INJECTION_TASK = ROOT / "fixtures" / "heldout" / "H5" / "task.yaml"
 
 
 def _code_dir(target: Path, prepare_source: str, test_source: str | None = None) -> Path:
@@ -80,24 +84,59 @@ def hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[st
 
         agent_code = _code_dir(work / "agent", prepare_source)
         heldout = {}
-        for fixture in list_fixtures("heldout", root / "fixtures"):
+        for fixture in list_fixtures("heldout"):
             check, _ = run_fixture(sandbox, agent_code, fixture, work / "heldout")
             heldout[fixture.id] = check.as_dict()
         result["heldout"] = heldout
         result["heldout_correct"] = sum(r["status"] == "ok" for r in heldout.values())
 
+        # A variant counts as caught only if the same tests pass on the reference.
+        # Otherwise a suite that fails everywhere (say, importing a helper the
+        # variants do not define) would score 8/8.
+        baseline = sandbox.run_tests(
+            _code_dir(work / "baseline", REFERENCE.read_text(encoding="utf-8"), test_source)
+        )
+        result["tests_pass_on_reference"] = baseline.ok
         variants = {}
         for variant in IDS:
             code = _code_dir(work / "variants" / variant, build_variant(variant), test_source)
             execution = sandbox.run_tests(code)
-            variants[variant] = {"caught": not execution.ok, "exit_code": execution.exit_code}
+            variants[variant] = {
+                "caught": baseline.ok and not execution.ok,
+                "tests_failed": not execution.ok,
+                "exit_code": execution.exit_code,
+            }
         result["variants"] = variants
         result["variants_caught"] = sum(v["caught"] for v in variants.values())
 
-    steps = rerun(run_dir, sandbox, root)
+    # Re-run in the image the run used; a different configured image cannot stand in.
+    same_image = sandbox.image == manifest["sandbox"]["digest"]
+    steps = rerun(run_dir, sandbox if same_image else None, root)
     result["rerun_matches"] = all(step.ok for step in steps)
     result["rerun"] = [step.__dict__ for step in steps]
     return result
+
+
+def safe_hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[str, Any]:
+    """Hidden checks that record a harness error as a result instead of stopping the eval."""
+    try:
+        return hidden_checks(run_dir, sandbox, root)
+    except Exception as error:
+        manifest = read_manifest(run_dir)
+        return {
+            "run_id": manifest["run_id"],
+            "study_id": manifest["task"]["study_id"],
+            "status": manifest["status"],
+            "status_reason": f"{manifest['status_reason']}; hidden checks raised {error!r}",
+            "requests": manifest["usage"]["requests"],
+            "submissions": manifest.get("submissions"),
+            "input_tokens": manifest["usage"]["input_tokens"],
+            "output_tokens": manifest["usage"]["output_tokens"],
+            "estimated_usd": manifest["usage"]["estimated_usd"],
+            "wall_seconds": manifest["timing_seconds"]["total"],
+            "injection": manifest.get("injection", {}),
+            "hidden_check_error": repr(error),
+        }
 
 
 def _cell(result: dict[str, Any]) -> str:
@@ -123,7 +162,7 @@ def _row(r: dict[str, Any]) -> list[str]:
         rerun_cell = "yes" if r["rerun_matches"] else "no"
     return [
         r["run_id"],
-        r["study_id"],
+        r["study_id"] + (" (injection run)" if r.get("injection_run") else ""),
         r["status"],
         _cell(r),
         _out_of(r, "heldout_correct", 5),
@@ -139,7 +178,7 @@ def _row(r: dict[str, Any]) -> list[str]:
 
 
 def _summary_row(results: list[dict[str, Any]]) -> list[str]:
-    passed = [r for r in results if r["status"] == "passed"]
+    passed = [r for r in results if r["status"] == "passed" and not r.get("injection_run")]
     n = len(passed)
     matches = sum(1 for r in passed if (r.get("reference") or {}).get("matches"))
     return [
@@ -204,6 +243,12 @@ def render_results(results: list[dict[str, Any]], notes: list[str]) -> str:
             for line in check.get("diff", []) or (["failed"] if check["status"] != "ok" else []):
                 lines.append(f"- {r['run_id']} on {fixture}: {line}")
                 any_disagreement = True
+        if r.get("tests_pass_on_reference") is False:
+            lines.append(
+                f"- {r['run_id']}: its tests fail on the reference converter, so no broken "
+                "variant counts as caught"
+            )
+            any_disagreement = True
         missed = [v for v, c in (r.get("variants") or {}).items() if not c["caught"]]
         if missed:
             lines.append(f"- {r['run_id']}: tests did not catch {', '.join(missed)}")
@@ -228,6 +273,7 @@ def evaluate(
     client_factory: Callable[[], Any],
     sandbox: Sandbox,
     root: Path = ROOT,
+    injection_task: Path | None = INJECTION_TASK,
 ) -> Path:
     """Section 17.2: run each task, then the hidden checks on every passed run."""
     results = []
@@ -235,9 +281,21 @@ def evaluate(
         task = resolve_task(task_path, root)
         for _ in range(config.runs_per_task):
             run = run_task(task, config, client_factory(), sandbox, root=root)
-            results.append(hidden_checks(run.run_dir, sandbox, root))
+            results.append(safe_hidden_checks(run.run_dir, sandbox, root))
+    if injection_task is not None:
+        run = run_task(
+            resolve_task(injection_task, root), config, client_factory(), sandbox, root=root
+        )
+        results.append({**safe_hidden_checks(run.run_dir, sandbox, root), "injection_run": True})
     notes = [
         f"Tasks: {', '.join(p.stem for p in task_paths)}; {config.runs_per_task} runs each.",
         f"Model {config.model}, effort {config.effort}.",
+        "The system prompt names the kinds of mistake behind B1-B8, as spec section 9.4 "
+        "allows, so the catch rate measures tests written with that hint.",
     ]
+    if injection_task is not None:
+        notes.append(
+            "One extra run gives the agent H5's inputs as its task, to see what it does with "
+            "the injected text (section 14). It is left out of the summary totals."
+        )
     return write_results(results, notes, root)
