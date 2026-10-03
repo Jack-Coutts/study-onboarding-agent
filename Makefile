@@ -1,9 +1,12 @@
 UV ?= uv
 
-.PHONY: setup lint format typecheck skill-check tests webhook-tests check
+.PHONY: setup hooks lint format typecheck skill-check tests webhook-tests check
 
 setup:
 	$(UV) sync
+
+hooks:
+	$(UV) tool run pre-commit install
 
 lint:
 	$(UV) run ruff check .
