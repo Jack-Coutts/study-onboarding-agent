@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Frozen downloads and run outputs stay local; their hashes are committed.
+data/raw/
+runs/
+
+# Local planning notes
+tmp/
+
+# Agent tooling state
+.amp/pr-review/
+.amp/in/
+.claude/settings.local.json
+
+# macOS
+.DS_Store
