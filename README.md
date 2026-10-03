@@ -35,3 +35,27 @@ implemented yet.
 ## Data
 
 Only public deposits are used. See [docs/data_policy.md](docs/data_policy.md).
+
+## What is here so far
+
+- [docs/spec.md](docs/spec.md): what will be built and how it will be judged.
+- [docs/decisions/](docs/decisions/index.md): conversion rules carried over from
+  the hand-written converters, with their reasons.
+- [.agents/skills/](.agents/skills/README.md): workflow instructions for coding
+  agents working on this repository, adapted from the pipeline's own.
+- [.amp/plugins/](.amp/plugins/pr-review.md): a review workflow that runs when a
+  pull request is labelled `ready for review`.
+
+## Development
+
+Needs [uv](https://docs.astral.sh/uv/). Webhook tests also need
+[Bun](https://bun.sh).
+
+```bash
+make setup          # uv sync
+make hooks          # run ruff before every commit
+make check          # ruff, mypy, skill check, pytest
+make webhook-tests  # Bun tests for the review webhook
+```
+
+CI runs the same checks on every push to `main` and on every pull request.
