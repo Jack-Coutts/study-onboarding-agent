@@ -29,22 +29,58 @@ broken versions that the agent's tests have to catch.
 
 ## Status
 
-Early. The build spec is in [docs/spec.md](docs/spec.md). Nothing is
-implemented yet.
+The harness is built and tested against a scripted model client and the real
+Docker sandbox. No live model run or evaluation has happened yet, so there are
+no results to report. What is still missing (spec section 22):
+
+- Real studies R1-R3 have not been chosen or frozen (`tasks/`).
+- The reference converter was written from the spec here, because the
+  pipeline's own converter is not in this repository. It should be compared
+  with the pipeline's converter on R1-R3 before results that depend on it are
+  trusted.
+- No live run has ended `passed`, so `onboard rerun` and the injection report
+  have only been exercised on scripted runs.
 
 ## Data
 
 Only public deposits are used. See [docs/data_policy.md](docs/data_policy.md).
 
-## What is here so far
+## What is here
 
-- [docs/spec.md](docs/spec.md): what will be built and how it will be judged.
+- [docs/spec.md](docs/spec.md): what is built and how it is judged.
 - [docs/decisions/](docs/decisions/index.md): conversion rules carried over from
   the hand-written converters, with their reasons.
+- `onboard/`: the harness. It holds the agent loop, tools, sandbox runner,
+  validator, manifests, re-runs, and evaluation.
+- `contract/`: the pipeline's input rules, checked on a converter's output.
+- `reference/`: the reference converter and eight broken variants, each with
+  one mistake a real converter has made.
+- `fixtures/`: synthetic deposits. Dev fixtures' expected outputs are shown to
+  the agent; held-out ones are not.
+- `sandbox/`: the container image and the isolation probe.
+- `prompts/`: the system prompt and the task prompt, which states the output
+  contract the agent is judged against.
 - [.agents/skills/](.agents/skills/README.md): workflow instructions for coding
   agents working on this repository, adapted from the pipeline's own.
 - [.amp/plugins/](.amp/plugins/pr-review.md): a review workflow that runs when a
   pull request is labelled `ready for review`.
+
+## Running it
+
+Needs Docker, and an Anthropic API key for live runs.
+
+```bash
+uv run onboard check-sandbox --build   # build the image, record its ID, run the probe
+uv run onboard fetch ST000123          # freeze a public deposit into data/raw/
+uv run onboard run fixtures/dev/D1/task.yaml   # one agent run on a dev-shaped task
+uv run onboard rerun runs/<run-id>     # re-run the accepted converter, no model call
+uv run onboard replay runs/<run-id>    # re-drive a run from its log, no API calls
+uv run onboard eval                    # runs on tasks/R*.yaml plus hidden checks
+```
+
+A live run costs roughly $0.50-$1.50 at the default limits in `config.yaml`.
+Each run writes `runs/<run-id>/` with the manifest, log, every version, and a
+report. A passed run is also copied to `studies/<ST>/`.
 
 ## Development
 
@@ -55,7 +91,10 @@ Needs [uv](https://docs.astral.sh/uv/). Webhook tests also need
 make setup          # uv sync
 make hooks          # run ruff before every commit
 make check          # ruff, mypy, skill check, pytest
+make docker-tests   # sandbox tests; `make check` skips them without Docker
 make webhook-tests  # Bun tests for the review webhook
 ```
 
-CI runs the same checks on every push to `main` and on every pull request.
+CI runs the same checks on every push to `main` and on every pull request, with
+the sandbox tests in a separate job. Tests use a scripted model client, so CI
+needs no API key.
