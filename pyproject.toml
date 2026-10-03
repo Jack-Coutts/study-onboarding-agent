@@ -42,6 +42,7 @@ files = [
     ".agents/skills/reviewing-prs/scripts",
     "onboard",
     "contract",
+    "sandbox",
     "reference",
     "tests",
 ]
