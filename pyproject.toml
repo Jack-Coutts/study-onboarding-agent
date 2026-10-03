@@ -31,9 +31,14 @@ python_version = "3.12"
 strict = true
 files = [".agents/skills/scripts", ".agents/skills/reviewing-prs/scripts", "tests"]
 
+# Test helpers and fakes stay readable without full annotations; their bodies
+# are still type-checked.
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
