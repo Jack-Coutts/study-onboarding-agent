@@ -1,0 +1,32 @@
+{
+  "1": {
+    "study_id": "ST900003",
+    "analysis_id": "AN000301",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Tryptophan",
+    "refmet_name": "Tryptophan",
+    "units": "uM",
+    "DATA": {
+      "M1": "3.1",
+      "M2": "2.9",
+      "M3": "3.0",
+      "B1": "",
+      "M4": "3.3"
+    }
+  },
+  "2": {
+    "study_id": "ST900003",
+    "analysis_id": "AN000301",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Kynurenine",
+    "refmet_name": "Kynurenine",
+    "units": "uM",
+    "DATA": {
+      "M1": "0.2",
+      "M2": "0.4",
+      "M3": "0.3",
+      "B1": "0.01",
+      "M4": "0.25"
+    }
+  }
+}

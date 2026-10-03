@@ -1,0 +1,12 @@
+sample_metadata_header_row: 1
+feature_names_row: 1
+data_start_row: 3
+feature_metadata_label_column: 1
+sheet_name: null
+target_column: Phenotype
+sample_column: Samples
+sample_type_column: Sample type
+batch_column: Batch
+position_column: Injection order
+feature_start_column: 6
+qc_sample_types: []

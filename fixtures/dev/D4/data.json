@@ -1,0 +1,32 @@
+{
+  "1": {
+    "study_id": "ST900004",
+    "analysis_id": "AN000401",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Serine",
+    "refmet_name": "Serine",
+    "units": "uM",
+    "DATA": {
+      "01": "1",
+      "007": "3",
+      "10": "4",
+      "1": "2",
+      "002": "5"
+    }
+  },
+  "2": {
+    "study_id": "ST900004",
+    "analysis_id": "AN000401",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Glycine",
+    "refmet_name": "Glycine",
+    "units": "uM",
+    "DATA": {
+      "01": "10",
+      "007": "30",
+      "10": "40",
+      "1": "20",
+      "002": "50"
+    }
+  }
+}

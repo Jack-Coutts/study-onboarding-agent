@@ -1,0 +1,30 @@
+{
+  "1": {
+    "study_id": "ST900002",
+    "local_sample_id": "P1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Diagnosis:healthy | Batch:A"
+  },
+  "2": {
+    "study_id": "ST900002",
+    "local_sample_id": "P2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Diagnosis:disease | Batch:A"
+  },
+  "3": {
+    "study_id": "ST900002",
+    "local_sample_id": "P3",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Diagnosis:disease | Batch:B"
+  },
+  "4": {
+    "study_id": "ST900002",
+    "local_sample_id": "P4",
+    "mb_sample_id": "SA900004",
+    "sample_source": "Plasma",
+    "factors": "Diagnosis:healthy | Batch:B"
+  }
+}

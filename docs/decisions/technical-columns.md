@@ -27,6 +27,14 @@ Matching on factor names misses a deposit that records run order under another
 name. Such a mapping is a study-specific parameter, written down in the study's
 processing notes.
 
+A sample is a control when its sample-type factor matches one of the task's
+`control_sample_types`, case-insensitively. The control's `Sample type` cell
+keeps the deposit's spelling (`Blank`, `pool`), and `qc_sample_types` in the
+layout config lists those spellings, so the pipeline matches exactly what was
+written. Controls are kept with a blank `Phenotype` and are not filtered by the
+task's `keep` list. A deposit with two factors whose names differ only in case
+(`Batch` and `batch`) stops the converter.
+
 ## Revisit when
 
 A deposit format records run metadata in a dedicated field.

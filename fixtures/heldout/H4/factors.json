@@ -1,0 +1,58 @@
+{
+  "1": {
+    "study_id": "ST900008",
+    "local_sample_id": "W1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Diet:low fat | Sample type:Sample"
+  },
+  "2": {
+    "study_id": "ST900008",
+    "local_sample_id": "W2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Diet:high fat | Sample type:Sample"
+  },
+  "3": {
+    "study_id": "ST900008",
+    "local_sample_id": "W3",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Sample type:Sample"
+  },
+  "4": {
+    "study_id": "ST900008",
+    "local_sample_id": "W4",
+    "mb_sample_id": "SA900004",
+    "sample_source": "Plasma",
+    "factors": "Diet: | Sample type:Sample"
+  },
+  "5": {
+    "study_id": "ST900008",
+    "local_sample_id": "PB1",
+    "mb_sample_id": "SA900005",
+    "sample_source": "Plasma",
+    "factors": "Sample type:PBQC"
+  },
+  "6": {
+    "study_id": "ST900008",
+    "local_sample_id": "BL1",
+    "mb_sample_id": "SA900006",
+    "sample_source": "Plasma",
+    "factors": "Sample type:Blank"
+  },
+  "7": {
+    "study_id": "ST900008",
+    "local_sample_id": "QC1",
+    "mb_sample_id": "SA900007",
+    "sample_source": "Plasma",
+    "factors": "Diet:low fat | Sample type:pool"
+  },
+  "8": {
+    "study_id": "ST900008",
+    "local_sample_id": "W5",
+    "mb_sample_id": "SA900008",
+    "sample_source": "Plasma",
+    "factors": "Diet:chow | Sample type:Sample"
+  }
+}

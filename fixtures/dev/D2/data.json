@@ -1,0 +1,56 @@
+{
+  "1": {
+    "study_id": "ST900002",
+    "analysis_id": "AN000201",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Valine",
+    "refmet_name": "Valine",
+    "units": "uM",
+    "DATA": {
+      "P1": "5",
+      "P2": "6",
+      "P3": "7",
+      "P4": "8"
+    }
+  },
+  "2": {
+    "study_id": "ST900002",
+    "analysis_id": "AN000201",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Leucine",
+    "refmet_name": "Leucine",
+    "units": "uM",
+    "DATA": {
+      "P1": "1",
+      "P2": "",
+      "P3": "3",
+      "P4": "4"
+    }
+  },
+  "3": {
+    "study_id": "ST900002",
+    "analysis_id": "AN000202",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Citrate",
+    "refmet_name": "Citric acid",
+    "units": "uM",
+    "DATA": {
+      "P1": "20",
+      "P2": "21",
+      "P4": "23"
+    }
+  },
+  "4": {
+    "study_id": "ST900002",
+    "analysis_id": "AN000202",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Succinate",
+    "refmet_name": "Succinic acid",
+    "units": "uM",
+    "DATA": {
+      "P1": "2",
+      "P2": "2.5",
+      "P4": "3"
+    }
+  }
+}

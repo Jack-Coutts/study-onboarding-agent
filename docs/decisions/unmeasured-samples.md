@@ -25,6 +25,11 @@ metabolite in that analysis.
 Selecting fewer analyses keeps more samples. The converter does not choose
 analyses for the user; the selection is a recorded parameter.
 
+An analysis lists a sample if any of its records has the sample in `DATA`. A
+listed sample missing from one record's `DATA` gets a blank cell for that
+metabolite, which the pipeline reads as not detected. A deposit where that
+happens often needs a closer look before its blanks are trusted.
+
 ## Revisit when
 
 The pipeline gains a separate marker for "not measured".

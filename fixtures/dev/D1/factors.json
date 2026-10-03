@@ -1,0 +1,44 @@
+{
+  "1": {
+    "study_id": "ST900001",
+    "local_sample_id": "S01",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Group:case | Sample type:Sample | Batch:1 | Injection order:3 | Sex:F"
+  },
+  "2": {
+    "study_id": "ST900001",
+    "local_sample_id": "S02",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Group:Healthy control | Sample type:Sample | Batch:1 | Injection order:1 | Sex:M"
+  },
+  "3": {
+    "study_id": "ST900001",
+    "local_sample_id": "S03",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Group:case | Sample type:Sample | Batch:2 | Injection order:5 | Sex:M"
+  },
+  "4": {
+    "study_id": "ST900001",
+    "local_sample_id": "QC1",
+    "mb_sample_id": "SA900004",
+    "sample_source": "Plasma",
+    "factors": "Sample type:QC | Batch:1 | Injection order:2"
+  },
+  "5": {
+    "study_id": "ST900001",
+    "local_sample_id": "QC2",
+    "mb_sample_id": "SA900005",
+    "sample_source": "Plasma",
+    "factors": "Sample type:QC | Batch:2 | Injection order:4"
+  },
+  "6": {
+    "study_id": "ST900001",
+    "local_sample_id": "S04",
+    "mb_sample_id": "SA900006",
+    "sample_source": "Plasma",
+    "factors": "Group:unknown | Sample type:Sample | Batch:2 | Injection order:6 | Sex:F"
+  }
+}

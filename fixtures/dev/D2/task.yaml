@@ -1,0 +1,4 @@
+study_id: ST900002
+phenotype_key: Diagnosis
+analyses: [AN000201, AN000202]
+control_sample_types: [QC, PBQC, pool, blank]

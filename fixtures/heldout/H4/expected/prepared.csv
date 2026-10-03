@@ -1,0 +1,7 @@
+Samples,Phenotype,Sample type,Batch,Injection order,Choline,Betaine
+METHOD,,,,,AN000801,AN000801
+BL1,,Blank,,,,0
+PB1,,PBQC,,,5,15
+QC1,,pool,,,7,17
+W1,low fat,subject,,,1,11
+W2,high fat,subject,,,2,12

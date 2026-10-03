@@ -1,6 +1,6 @@
 UV ?= uv
 
-.PHONY: setup hooks lint format typecheck skill-check tests webhook-tests check
+.PHONY: setup hooks lint format typecheck skill-check tests docker-tests webhook-tests check
 
 setup:
 	$(UV) sync
@@ -24,6 +24,10 @@ skill-check:
 
 tests: skill-check
 	$(UV) run pytest
+
+# Needs a running Docker daemon. `make tests` skips these when Docker is absent.
+docker-tests:
+	$(UV) run pytest -m docker
 
 # Needs Bun, which is not a Python dependency.
 webhook-tests:

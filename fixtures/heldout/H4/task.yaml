@@ -1,0 +1,4 @@
+study_id: ST900008
+phenotype_key: Diet
+keep: [low fat, high fat]
+control_sample_types: [QC, PBQC, pool, blank]

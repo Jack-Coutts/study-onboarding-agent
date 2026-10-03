@@ -36,7 +36,18 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - run: uv run python .agents/skills/scripts/validate_skills.py
-      - run: uv run pytest
+      - run: uv run pytest -m "not docker"
+
+  docker-tests:
+    name: Sandbox tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest -m docker
 
   webhook-tests:
     name: Webhook tests

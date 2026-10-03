@@ -1,0 +1,11 @@
+{
+  "n_samples": 4,
+  "n_features": 2,
+  "phenotype_counts": {"Control": 2, "Drug": 1},
+  "analyses": ["AN000301"],
+  "extra_factor_keys": ["Age", "Genotype"],
+  "excluded_samples": {"M4": "no phenotype"},
+  "duplicate_metabolites_dropped": [],
+  "technical_columns_from_factors": ["Sample type"],
+  "blank_technical_columns": ["Batch", "Injection order"]
+}

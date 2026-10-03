@@ -24,7 +24,9 @@ any factor, stop with an error that names both records.
 
 ## Limits
 
-Identical duplicate records are collapsed to one. Whitespace around an
+Identical duplicate records are collapsed to one. One record that gives the
+same factor two different values (`Group:case | Group:control`) also stops the
+run; the same value repeated is accepted. Whitespace around an
 identifier is not trimmed; a deposit that relies on that needs a decision of its
 own.
 

@@ -1,0 +1,54 @@
+{
+  "1": {
+    "study_id": "ST900007",
+    "analysis_id": "AN000701",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Hexose.1",
+    "refmet_name": "",
+    "units": "uM",
+    "DATA": {
+      "Z1": "7",
+      "Z2": "8",
+      "Z3": "9"
+    }
+  },
+  "2": {
+    "study_id": "ST900007",
+    "analysis_id": "AN000701",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Hexose",
+    "refmet_name": "Hexose",
+    "units": "uM",
+    "DATA": {
+      "Z1": "1",
+      "Z2": "2",
+      "Z3": "3"
+    }
+  },
+  "3": {
+    "study_id": "ST900007",
+    "analysis_id": "AN000701",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Hexose",
+    "refmet_name": "Hexose",
+    "units": "uM",
+    "DATA": {
+      "Z1": "4",
+      "Z2": "5",
+      "Z3": "6"
+    }
+  },
+  "4": {
+    "study_id": "ST900007",
+    "analysis_id": "AN000701",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Hexose",
+    "refmet_name": "Hexose",
+    "units": "uM",
+    "DATA": {
+      "Z1": "10",
+      "Z2": "11",
+      "Z3": "12"
+    }
+  }
+}

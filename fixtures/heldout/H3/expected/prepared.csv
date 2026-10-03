@@ -1,0 +1,5 @@
+Samples,Phenotype,Sample type,Batch,Injection order,Hexose.1,Hexose,Hexose.2,Hexose.3
+METHOD,,,,,AN000701,AN000701,AN000701,AN000701
+Z1,a,subject,,,7,1,4,10
+Z2,b,subject,,,8,2,5,11
+Z3,b,subject,,,9,3,6,12

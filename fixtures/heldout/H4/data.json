@@ -1,0 +1,38 @@
+{
+  "1": {
+    "study_id": "ST900008",
+    "analysis_id": "AN000801",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Choline",
+    "refmet_name": "Choline",
+    "units": "uM",
+    "DATA": {
+      "W1": "1",
+      "W2": "2",
+      "W3": "3",
+      "W4": "4",
+      "PB1": "5",
+      "BL1": "",
+      "QC1": "7",
+      "W5": "8"
+    }
+  },
+  "2": {
+    "study_id": "ST900008",
+    "analysis_id": "AN000801",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Betaine",
+    "refmet_name": "Betaine",
+    "units": "uM",
+    "DATA": {
+      "W1": "11",
+      "W2": "12",
+      "W3": "13",
+      "W4": "14",
+      "PB1": "15",
+      "BL1": "0",
+      "QC1": "17",
+      "W5": "18"
+    }
+  }
+}

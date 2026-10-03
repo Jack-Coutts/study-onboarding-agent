@@ -1,0 +1,30 @@
+{
+  "1": {
+    "study_id": "ST900007",
+    "local_sample_id": "Z1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Group:a"
+  },
+  "2": {
+    "study_id": "ST900007",
+    "local_sample_id": "Z2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Group:b"
+  },
+  "3": {
+    "study_id": "ST900007",
+    "local_sample_id": "Z1",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Group:a"
+  },
+  "4": {
+    "study_id": "ST900007",
+    "local_sample_id": "Z3",
+    "mb_sample_id": "SA900004",
+    "sample_source": "Plasma",
+    "factors": "Group:b"
+  }
+}

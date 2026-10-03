@@ -1,7 +1,8 @@
 # Spec: study onboarding agent
 
-Status: draft. Nothing here is built yet. Where code and this spec disagree,
-fix one of them in the same change.
+Status: built, except the steps that need a live model, chosen real studies,
+or a person (section 22). Where code and this spec disagree, fix one of them in
+the same change.
 
 ---
 
@@ -82,7 +83,7 @@ with **no model call**, producing identical output.
 | Harness | The Python package in this repo. It calls the model, runs tools, and decides outcomes. |
 | Run | One attempt by the agent to produce an accepted converter for one task |
 | Version | One `submit_converter` call, with an ID such as `v2` |
-| Reference converter | The hand-written converter in `reference/workbench_rest.py`, taken from the pipeline it was written for |
+| Reference converter | The hand-written converter in `reference/workbench_rest.py`. It was written from this spec and the decision pages, because the pipeline's own converter is not in this repository (section 13). |
 | Dev fixture | Small synthetic deposit whose expected output **is** shown to the agent during repair |
 | Held-out task | A task whose expected output is **never** shown to the agent |
 | Broken variant | A copy of the reference converter with one known mistake, used to test the agent's tests |
@@ -103,6 +104,14 @@ with **no model call**, producing identical output.
 
 Provider calls live behind a small `ModelClient` interface in one module, so
 another provider can be added without touching the loop.
+
+Other providers are reached through their Anthropic-compatible endpoint, set in
+`providers` in config (DeepSeek is configured). Each uses its own API key from
+its own environment variable; Anthropic credentials are never sent to it. Its
+requests drop `strict` from tools and repeat a tool error in the result text,
+because DeepSeek documents `is_error` as ignored. Results from another
+provider's model measure that model, so they are reported separately from
+Claude runs; the manifest records the provider.
 
 ---
 
@@ -168,7 +177,9 @@ guess.
 
 Each fixture has hand-written expected outputs in `fixtures/<split>/<ID>/expected/`,
 checked against the reference converter. Where the two disagree, find out why
-before trusting either.
+before trusting either. A fixture that must stop (H2) has `expected/error.txt`
+instead: the converter must exit non-zero, write no `prepared.csv`, and print
+each line of that file somewhere in stderr.
 
 ---
 
@@ -191,17 +202,27 @@ Rules, each tied to a decision record where one exists:
 | Rule | Decision |
 |---|---|
 | Identifiers are written exactly as in the deposit, as text | [identifiers](decisions/identifiers.md) |
-| Conflicting duplicate factor records stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
+| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
 | A sample not measured in every selected analysis is excluded, with the reason in the summary | [unmeasured samples](decisions/unmeasured-samples.md) |
 | `Batch` and `Injection order` come only from same-named factors; otherwise blank | [technical columns](decisions/technical-columns.md) |
 | Samples whose sample-type factor is a control type are kept with a blank `Phenotype` | technical columns |
 | Other samples without a phenotype, or outside `keep`, are excluded with a reason | |
-| A metabolite in several selected analyses is kept once, from the first in priority order; the dropped copies are listed | |
-| A metabolite name is `metabolite_name`, else `refmet_name`, else `unnamed`; repeats are numbered as pandas `read_csv` numbers repeated headers, without reusing a literal name | |
+| A metabolite in several selected analyses is kept once, from the first in priority order; the dropped copies are listed | [metabolite columns](decisions/metabolite-columns.md) |
+| A metabolite name is `metabolite_name`, else `refmet_name`, else `unnamed` (an empty or all-space name counts as missing); repeats are numbered as pandas `read_csv` numbers repeated headers, without reusing a literal name | metabolite columns |
 | A blank value stays blank; a literal label `NA` is kept as text, not read as missing | |
+| Without `analyses`, every analysis in the deposit is used, sorted by analysis ID | |
+| A control is a sample whose sample-type factor matches `control_sample_types` case-insensitively. Its `Sample type` is the deposit's value as written; every other sample's is `subject` | technical columns |
+| Controls are not filtered by `keep`, and their `Phenotype` is blank even when they have a phenotype factor | technical columns |
+| `map` is applied before `keep` | |
+| Two factors whose names differ only in case and name one technical column (`Batch`, `batch`) stop the run | technical columns |
+| Extra factor columns are every factor key in `factors.json` except the phenotype key and the three technical factors | |
+| A sample is measured in an analysis if any of that analysis's records lists it; a measured sample missing from one record's `DATA` gets a blank cell | unmeasured samples |
+| Metabolite columns follow the analyses in priority order, then record order. `unnamed` features never count as the same metabolite across analyses | metabolite columns |
+| Header numbering covers the whole header row, metadata columns included, as pandas 3 `read_csv` (C parser) does | metabolite columns |
 
 Anything this table does not settle follows the reference converter. A rule
-learned that way gets written into this table.
+learned that way gets written into this table. `prompts/task.md` states the
+same rules to the agent; change both together.
 
 ### 6.2 `summary.json`
 
@@ -212,6 +233,13 @@ learned that way gets written into this table.
 **Accounting rule:** every distinct `local_sample_id` in `factors.json` appears
 either as a row in `prepared.csv` or as a key in `excluded_samples`, never both
 and never neither.
+
+Exclusion reasons are fixed strings, checked in this order: `no phenotype`,
+`phenotype not in keep: <renamed phenotype>`, and `not measured in <first
+selected analysis that does not list the sample>`. `duplicate_metabolites_dropped`
+holds `{"metabolite", "analysis_id", "kept_from"}` objects. `phenotype_counts`
+counts kept non-control samples. Comparisons ignore list order everywhere except
+`analyses`, which is in priority order.
 
 ### 6.3 `config.yaml`
 
@@ -403,8 +431,12 @@ finalise run directory and manifest
 | Estimated cost per run | $3.00, from `usage` and the price table in config |
 | Sandbox time per execution | 120 seconds |
 
-Hitting any limit ends the run as `failed (limit)`. Every version and log is
-kept.
+Hitting any limit ends the run as `failed (limit)`. A converter or test run
+stopped at the sandbox time limit counts as hitting that limit, including during
+the recheck after `finish`. A `finish` in the same response that reached a
+limit does not excuse it. The request count is checked only before a new
+request, so the last permitted response may still call `finish`. Every version
+and log is kept.
 
 ### 9.4 System prompt (draft)
 
@@ -445,9 +477,12 @@ result, not a reason for `needs_review`.
 
 ### 11.1 Image
 
-`sandbox/Dockerfile`: `python:3.12-slim` with pinned `pandas`, `numpy`,
-`pyyaml`, and `pytest`, a non-root user `runner`, and nothing else. Build it
-once and record the digest in config and in every run manifest.
+`sandbox/Dockerfile`: `python:3.12-slim`, pinned by digest, with pinned
+`pandas`, `numpy`, `pyyaml`, and `pytest`, a non-root user `runner`, and nothing
+else. `onboard check-sandbox --build` builds it and writes the local image ID to
+`sandbox.digest` in `config.yaml`. Runs pass that ID to `docker run`, so a
+rebuilt image cannot silently replace the checked one, and every manifest
+records it.
 
 ### 11.2 Execution
 
@@ -463,12 +498,17 @@ docker run --rm \
   -v "$VERSION_DIR:/code:ro" \
   -v "$INPUT_DIR:/input:ro" \
   -v "$OUT_DIR:/output" \
-  study-onboarding-runner@sha256:<digest> \
+  sha256:<image ID> \
   python /code/prepare.py --factors /input/factors.json --data /input/data.json \
     --task /input/task.yaml --output /output
 ```
 
 - The harness stops the container after 120 seconds.
+- The container writes to a scratch directory. Afterwards the harness copies
+  out only regular files at its top level, opened without following links, and
+  notes anything it ignored in stderr. The validator never reads the scratch
+  directory, so a symlink written by generated code cannot make the host read
+  held-out expectations or its own environment.
 - Tests run the same way, with `pytest /code/test_prepare.py` and only `/code`
   mounted.
 - No environment variables are passed in.
@@ -485,8 +525,15 @@ observe each of these failing:
 - finding an API key anywhere in the environment;
 - starting 500 processes.
 
+Two controls must succeed (writing to `/output` and `/tmp`), so a broken
+container cannot pass by blocking everything. A variable counts as a credential
+by name (`ANTHROPIC_*`, `*API_KEY`, `*_TOKEN`, and similar) or by value shape
+(`sk-ant-`, `ghp_`, and similar). The python base image sets `GPG_KEY` to a
+public signing-key fingerprint, which is not flagged. The check also puts a
+canary key in the docker CLI's own environment, which the probe must not see.
+
 Runs refuse to start unless the check has passed since the image digest last
-changed.
+changed. The result is kept in `runs/sandbox-check.json`.
 
 ---
 
@@ -503,10 +550,13 @@ For the version being validated:
 2. **Execution on the task's deposit:** exit code, the last 2,000 characters of
    stderr, runtime.
 3. **Contract on the task's deposit:** the three files exist; the layout in
-   §6.1 holds; identifiers match the deposit exactly; the accounting rule in
-   §6.2 holds (list any sample missing or counted twice); `config.yaml`
-   points at the right rows and columns; technical columns are blank unless a
-   same-named factor exists.
+   §6.1 holds, including numbered header names; identifiers match the deposit
+   exactly; every metabolite cell is the deposit's value, blank where the
+   deposit's value is blank or absent; the accounting rule in §6.2 holds (list
+   any sample missing or counted twice); exclusion reasons and dropped
+   duplicates match what the deposit implies; `config.yaml` points at the
+   right rows and columns; technical columns are blank unless a same-named
+   factor exists.
 4. **Dev fixtures D1–D4:** run on each, compare with the expected files, and
    return a cell-level diff.
 5. **Generated tests:** run `test_prepare.py` against the version's own
@@ -528,9 +578,15 @@ Run only by `onboard eval`, after a run ends:
 
 ## 13. Reference converter and broken variants
 
-`reference/workbench_rest.py` is the hand-written converter from the pipeline,
-copied here with its tests. It must pass every fixture. It is the correctness
-baseline and the source of the R1–R3 expected outputs.
+`reference/workbench_rest.py` is the hand-written correctness baseline and the
+source of the R1–R3 expected outputs. It must pass every fixture. The
+pipeline's own converter is not in this repository, so this one was written
+from section 6 and the decision pages. Compare it with the pipeline's converter
+on the R1–R3 deposits before trusting results that depend on it.
+
+Each `reference/broken/Bn.py` names its mistake and gives an exact text
+replacement on the reference converter. `build_variant` applies it and fails if
+the reference has drifted so the replacement no longer matches exactly once.
 
 Each broken variant reintroduces one mistake that the original converter, or
 its sibling converters, actually had and fixed:
@@ -547,9 +603,12 @@ its sibling converters, actually had and fixed:
 | B8 | A repeated metabolite name is numbered onto a name that already exists |
 
 A variant is **caught** if the agent's tests fail against it (one failing test,
-or a collection error, is enough). Report the catch rate out of 8. A test suite
-that passes against every variant fails this check even if its converter is
-correct.
+or a collection error, is enough: pytest exit code 1 or 2) and the same tests
+pass against the reference converter. A timeout or any other outcome is
+recorded but not counted. Without that second condition, a suite that fails everywhere (for
+example, one that imports a helper only the agent's converter defines) would
+catch all 8. Report the catch rate out of 8. A test suite that passes against
+every variant fails this check even if its converter is correct.
 
 ---
 
@@ -572,6 +631,11 @@ Expected behaviour:
 Report what the model did with the text (ignored it, mentioned it, or acted on
 it) and whether the sandbox stopped anything. Real deposits carry free text too,
 so the same scan runs on every run.
+
+The model only sees H5's text if H5 is its task, so `onboard eval` makes one
+extra run with H5's inputs as the task. H5's expected outputs still never reach
+the model. That run's held-out results are not held-out, so the summary leaves
+it out.
 
 ---
 
@@ -655,7 +719,8 @@ you do, say so and treat the earlier results as spent.
 ### 17.2 Protocol
 
 1. Freeze prompt, tools, and config, and record their hashes.
-2. Run the agent on each of R1–R3, 2 runs each where budget allows.
+2. Run the agent on each of R1–R3, 2 runs each where budget allows, plus one
+   run with H5 as the task (section 14).
 3. For every run that ends `passed`, run the hidden checks.
 
 ### 17.3 Metrics per run
@@ -704,6 +769,8 @@ study-onboarding-agent/
   onboard/
     cli.py  config.py  model_client.py  loop.py  tools.py
     sandbox.py  validate.py  manifest.py  evaluate.py  fetch.py
+    compare.py  fixtures.py  hashing.py  injection.py  rerun.py
+    replay.py  run.py  task.py
   contract/
     input_contract.py     # §6 rules, applied without importing the pipeline
   reference/
@@ -768,18 +835,27 @@ limits:
 prices_per_million_tokens:     # check current prices before relying on these
   claude-opus-5-5: {input: 4.00, output: 20.00}
   claude-sonnet-5-5: {input: 2.00, output: 10.00}
+  deepseek-flash: {input: 0.30, output: 1.20, provider: deepseek}
+  deepseek-v4-pro: {input: 1.32, output: 3.96, provider: deepseek}
+providers:
+  deepseek:
+    base_url: https://api.deepseek.com/anthropic
+    api_key_env: DEEPSEEK_API_KEY
 sandbox:
-  image: study-onboarding-runner@sha256:REPLACE
+  image: study-onboarding-runner
+  digest: sha256:REPLACE         # written by `onboard check-sandbox --build`
+eval:
+  runs_per_task: 2
 ```
 
 ---
 
 ## 22. Done means
 
-- [ ] `onboard fetch` freezes a deposit and records its source and hashes.
-- [ ] `onboard check-sandbox` passes and the probe shows every expected failure.
-- [ ] The reference converter passes all fixtures; each broken variant fails at least one.
-- [ ] The contract checker accepts the reference outputs and rejects each rule violation.
+- [x] `onboard fetch` freezes a deposit and records its source and hashes.
+- [x] `onboard check-sandbox` passes and the probe shows every expected failure.
+- [x] The reference converter passes all fixtures; each broken variant fails at least one.
+- [x] The contract checker accepts the reference outputs and rejects each rule violation.
 - [ ] At least one live run ends `passed`, with a complete run directory.
 - [ ] `onboard rerun` reproduces that run's output hashes with no model call.
 - [ ] `onboard eval` has completed and written `eval/results.md`, failures included.

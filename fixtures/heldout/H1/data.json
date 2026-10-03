@@ -1,0 +1,80 @@
+{
+  "1": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000501",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Glutamine",
+    "refmet_name": "Glutamine",
+    "units": "uM",
+    "DATA": {
+      "X1": "1",
+      "X2": "2",
+      "X3": "3"
+    }
+  },
+  "2": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000501",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Proline",
+    "refmet_name": "Proline",
+    "units": "uM",
+    "DATA": {
+      "X1": "4",
+      "X2": "5",
+      "X3": "6"
+    }
+  },
+  "3": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000501",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "",
+    "refmet_name": "",
+    "units": "uM",
+    "DATA": {
+      "X1": "0.1",
+      "X2": "0.2",
+      "X3": "0.3"
+    }
+  },
+  "4": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000502",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Glutamine",
+    "refmet_name": "Glutamine",
+    "units": "uM",
+    "DATA": {
+      "X1": "1.1",
+      "X2": "2.1",
+      "X3": "3.1"
+    }
+  },
+  "5": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000502",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Ornithine",
+    "refmet_name": "Ornithine",
+    "units": "uM",
+    "DATA": {
+      "X1": "7",
+      "X2": "8",
+      "X3": "9"
+    }
+  },
+  "6": {
+    "study_id": "ST900005",
+    "analysis_id": "AN000502",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "",
+    "refmet_name": "",
+    "units": "uM",
+    "DATA": {
+      "X1": "0.4",
+      "X2": "0.5",
+      "X3": "0.6"
+    }
+  }
+}

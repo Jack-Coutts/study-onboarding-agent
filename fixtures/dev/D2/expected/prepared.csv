@@ -1,0 +1,5 @@
+Samples,Phenotype,Sample type,Batch,Injection order,Valine,Leucine,Citrate,Succinate
+METHOD,,,,,AN000201,AN000201,AN000202,AN000202
+P1,healthy,subject,A,,5,1,20,2
+P2,disease,subject,A,,6,,21,2.5
+P4,healthy,subject,B,,8,4,23,3

@@ -1,0 +1,7 @@
+Samples,Phenotype,Sample type,Batch,Injection order,Serine,Glycine
+METHOD,,,,,AN000401,AN000401
+002,NA,subject,,,5,50
+007,case,subject,,,3,30
+01,NA,subject,,,1,10
+1,control,subject,,,2,20
+10,control,subject,,,4,40

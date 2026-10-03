@@ -1,0 +1,7 @@
+Samples,Phenotype,Sex,Sample type,Batch,Injection order,Alanine,Glucose,Lactic acid
+METHOD,,,,,,AN000101,AN000101,AN000101
+QC1,,,QC,1,2,1.8,11.2,0.6
+QC2,,,QC,2,4,1.7,,0.6
+S01,case,F,subject,1,3,1.5,10,0.5
+S02,control,M,subject,1,1,2.0,12.5,0.7
+S03,case,M,subject,2,5,,11,0.6
