@@ -41,6 +41,7 @@ files = [
     ".agents/skills/scripts",
     ".agents/skills/reviewing-prs/scripts",
     "onboard",
+    "contract",
     "reference",
     "tests",
 ]
