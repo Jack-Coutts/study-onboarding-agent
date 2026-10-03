@@ -1,0 +1,14 @@
+{
+  "1": {
+    "study_id": "ST900006",
+    "analysis_id": "AN000601",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Taurine",
+    "refmet_name": "Taurine",
+    "units": "uM",
+    "DATA": {
+      "Y1": "1",
+      "Y2": "2"
+    }
+  }
+}

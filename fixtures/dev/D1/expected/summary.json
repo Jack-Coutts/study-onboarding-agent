@@ -1,0 +1,11 @@
+{
+  "n_samples": 5,
+  "n_features": 3,
+  "phenotype_counts": {"case": 2, "control": 1},
+  "analyses": ["AN000101"],
+  "extra_factor_keys": ["Sex"],
+  "excluded_samples": {"S04": "phenotype not in keep: unknown"},
+  "duplicate_metabolites_dropped": [],
+  "technical_columns_from_factors": ["Sample type", "Batch", "Injection order"],
+  "blank_technical_columns": []
+}

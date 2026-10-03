@@ -1,0 +1,23 @@
+{
+  "1": {
+    "study_id": "ST900006",
+    "local_sample_id": "Y1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Arm:placebo"
+  },
+  "2": {
+    "study_id": "ST900006",
+    "local_sample_id": "Y2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Arm:drug"
+  },
+  "3": {
+    "study_id": "ST900006",
+    "local_sample_id": "Y1",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Arm:drug"
+  }
+}

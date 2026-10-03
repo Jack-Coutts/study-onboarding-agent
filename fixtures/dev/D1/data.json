@@ -1,0 +1,50 @@
+{
+  "1": {
+    "study_id": "ST900001",
+    "analysis_id": "AN000101",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Alanine",
+    "refmet_name": "Alanine",
+    "units": "uM",
+    "DATA": {
+      "S01": "1.5",
+      "S02": "2.0",
+      "S03": "",
+      "QC1": "1.8",
+      "QC2": "1.7",
+      "S04": "2.2"
+    }
+  },
+  "2": {
+    "study_id": "ST900001",
+    "analysis_id": "AN000101",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "Glucose",
+    "refmet_name": "Glucose",
+    "units": "uM",
+    "DATA": {
+      "S01": "10",
+      "S02": "12.5",
+      "S03": "11",
+      "QC1": "11.2",
+      "QC2": "11.1",
+      "S04": "9"
+    }
+  },
+  "3": {
+    "study_id": "ST900001",
+    "analysis_id": "AN000101",
+    "analysis_summary": "Synthetic LC-MS analysis",
+    "metabolite_name": "",
+    "refmet_name": "Lactic acid",
+    "units": "uM",
+    "DATA": {
+      "S01": "0.5",
+      "S02": "0.7",
+      "S03": "0.6",
+      "QC1": "0.6",
+      "QC2": "0.6",
+      "S04": "0.4"
+    }
+  }
+}

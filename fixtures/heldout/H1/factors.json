@@ -1,0 +1,23 @@
+{
+  "1": {
+    "study_id": "ST900005",
+    "local_sample_id": "X1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Class:A"
+  },
+  "2": {
+    "study_id": "ST900005",
+    "local_sample_id": "X2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Class:B"
+  },
+  "3": {
+    "study_id": "ST900005",
+    "local_sample_id": "X3",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Class:A"
+  }
+}

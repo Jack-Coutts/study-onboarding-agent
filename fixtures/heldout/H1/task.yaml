@@ -1,0 +1,4 @@
+study_id: ST900005
+phenotype_key: Class
+analyses: [AN000502, AN000501]
+control_sample_types: [QC, PBQC, pool, blank]

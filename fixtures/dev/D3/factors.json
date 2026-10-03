@@ -1,0 +1,37 @@
+{
+  "1": {
+    "study_id": "ST900003",
+    "local_sample_id": "M1",
+    "mb_sample_id": "SA900001",
+    "sample_source": "Plasma",
+    "factors": "Genotype:wild type | Treatment:Control | Sample type:Sample | Age:8"
+  },
+  "2": {
+    "study_id": "ST900003",
+    "local_sample_id": "M2",
+    "mb_sample_id": "SA900002",
+    "sample_source": "Plasma",
+    "factors": "Genotype:knockout | Treatment:Drug | Sample type:Sample | Age:10"
+  },
+  "3": {
+    "study_id": "ST900003",
+    "local_sample_id": "M3",
+    "mb_sample_id": "SA900003",
+    "sample_source": "Plasma",
+    "factors": "Genotype:knockout | Treatment:Control | Sample type:Sample"
+  },
+  "4": {
+    "study_id": "ST900003",
+    "local_sample_id": "B1",
+    "mb_sample_id": "SA900004",
+    "sample_source": "Plasma",
+    "factors": "Sample type:blank"
+  },
+  "5": {
+    "study_id": "ST900003",
+    "local_sample_id": "M4",
+    "mb_sample_id": "SA900005",
+    "sample_source": "Plasma",
+    "factors": "Genotype:wild type | Sample type:Sample | Age:9"
+  }
+}

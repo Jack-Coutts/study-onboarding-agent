@@ -1,0 +1,5 @@
+Samples,Phenotype,Sample type,Batch,Injection order,Glutamine,Ornithine,unnamed,Proline,unnamed.1
+METHOD,,,,,AN000502,AN000502,AN000502,AN000501,AN000501
+X1,A,subject,,,1.1,7,0.4,4,0.1
+X2,B,subject,,,2.1,8,0.5,5,0.2
+X3,A,subject,,,3.1,9,0.6,6,0.3

@@ -1,0 +1,5 @@
+study_id: ST900001
+phenotype_key: Group
+map: {Healthy control: control}
+keep: [control, case]
+control_sample_types: [QC, PBQC, pool, blank]

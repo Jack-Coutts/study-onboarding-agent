@@ -1,0 +1,13 @@
+{
+  "n_samples": 3,
+  "n_features": 5,
+  "phenotype_counts": {"A": 2, "B": 1},
+  "analyses": ["AN000502", "AN000501"],
+  "extra_factor_keys": [],
+  "excluded_samples": {},
+  "duplicate_metabolites_dropped": [
+    {"metabolite": "Glutamine", "analysis_id": "AN000501", "kept_from": "AN000502"}
+  ],
+  "technical_columns_from_factors": [],
+  "blank_technical_columns": ["Batch", "Injection order"]
+}
