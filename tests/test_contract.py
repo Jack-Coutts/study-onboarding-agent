@@ -265,3 +265,75 @@ def test_contract_numbers_headers_as_pandas_does(header, pandas_columns):
     from contract.input_contract import number_like_pandas
 
     assert number_like_pandas(header) == pandas_columns
+
+
+# Findings from the Amp review of 641675d.
+
+
+def test_contract_rejects_a_blank_cell_written_as_zero(tmp_path):
+    fixture = BY_ID["D1"]
+    output = reference_output(fixture, tmp_path)
+    rewrite_csv(output / "prepared.csv", lambda grid: grid[6].__setitem__(6, "0"))  # S03 Alanine
+    assert "values" in check(fixture, output)
+
+
+def test_contract_rejects_zero_for_a_sample_missing_from_one_record(tmp_path):
+    fixture = BY_ID["D1"]  # QC2 is measured in AN000101 but missing from the Glucose record
+    output = reference_output(fixture, tmp_path)
+    rewrite_csv(output / "prepared.csv", lambda grid: grid[3].__setitem__(7, "0"))  # QC2 Glucose
+    assert "values" in check(fixture, output)
+
+
+def test_contract_requires_a_stop_on_a_record_that_repeats_a_factor(tmp_path):
+    fixture = _deposit(
+        tmp_path, {"A": "G:case | G:control", "B": "G:case"}, ["x"], "phenotype_key: G\n"
+    )
+    with pytest.raises(ConversionError):
+        reference_output(fixture, tmp_path)
+    written = tmp_path / "written"
+    written.mkdir()
+    (written / "prepared.csv").write_text("Samples\n")
+    assert check(fixture, written) == ["conflicts"]
+
+
+def test_unnamed_features_are_never_merged_across_analyses(tmp_path):
+    directory = tmp_path / "deposit"
+    directory.mkdir()
+    (directory / "factors.json").write_text(
+        json.dumps({"1": {"local_sample_id": "A", "factors": "G:x"}})
+    )
+    records = [
+        ("AN1", "unnamed", ""),
+        ("AN2", "unnamed", ""),
+        ("AN1", "", ""),
+        ("AN2", "", ""),
+    ]
+    data = {
+        str(i): {"analysis_id": a, "metabolite_name": m, "refmet_name": r, "DATA": {"A": str(i)}}
+        for i, (a, m, r) in enumerate(records, 1)
+    }
+    (directory / "data.json").write_text(json.dumps(data))
+    (directory / "task.yaml").write_text("phenotype_key: G\n")
+    fixture = Fixture(id="tmp", split="dev", directory=directory)
+    output = reference_output(fixture, tmp_path)
+    header = (output / "prepared.csv").read_text().splitlines()[0].split(",")
+    assert header[5:] == ["unnamed", "unnamed.1", "unnamed.2", "unnamed.3"]
+    assert check(fixture, output) == []
+
+
+def _wrong_reason(summary):
+    summary["excluded_samples"]["P3"] = "no phenotype"
+
+
+def _invented_drop(summary):
+    summary["duplicate_metabolites_dropped"].append(
+        {"metabolite": "Valine", "analysis_id": "AN000202", "kept_from": "AN000201"}
+    )
+
+
+@pytest.mark.parametrize("mutate", [_wrong_reason, _invented_drop])
+def test_contract_checks_the_audit_in_the_summary(tmp_path, mutate):
+    fixture = BY_ID["D2"]
+    output = reference_output(fixture, tmp_path)
+    rewrite_json(output / "summary.json", mutate)
+    assert "summary" in check(fixture, output)

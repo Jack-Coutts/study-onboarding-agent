@@ -65,7 +65,7 @@ Rules:
 1. Identifiers are written exactly as in the deposit, as text. `01` and `1` are
    different samples. Whitespace inside an identifier is kept.
 2. If two factor records share a `local_sample_id` but disagree on any factor,
-   stop: write nothing, print an error naming the sample to stderr, and exit
+   or one record gives the same factor two different values, stop: write nothing, print an error naming the sample to stderr, and exit
    with a non-zero code. Identical duplicate records collapse to one.
 3. Extra factor columns are every factor key in `factors.json` except the
    phenotype key and the technical factors in rule 4. A sample without that

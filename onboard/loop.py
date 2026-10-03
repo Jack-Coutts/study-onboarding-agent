@@ -109,11 +109,13 @@ class AgentLoop:
         self.messages: list[dict[str, Any]] = []
         self.started = 0.0
 
-    def limit_reached(self) -> str | None:
+    def limit_reached(self, before_request: bool = True) -> str | None:
+        """A limit that has been reached. The request count matters only before a new
+        request, so the last permitted response may still finish the run."""
         limits = self.config.limits
         if self.tools.limit_hit:
             return self.tools.limit_hit
-        if self.accounting.requests >= limits.requests:
+        if before_request and self.accounting.requests >= limits.requests:
             return "requests"
         if self.clock() - self.started >= limits.wall_clock_seconds:
             return "wall_clock_seconds"
@@ -176,6 +178,13 @@ class AgentLoop:
                 results.append(_tool_result(block["id"], result.content, result.is_error))
             self.append_user(results)
             if self.tools.finish_claim is not None:
+                # A limit reached by this response (cost, time, a sandbox timeout) is not
+                # excused because the same response also called finish.
+                limit = self.limit_reached(before_request=False)
+                if limit:
+                    return self.end(
+                        "failed", f"limit reached: {limit}", finish=self.tools.finish_claim
+                    )
                 return self.decide(self.tools.finish_claim)
 
     def append_user(self, content: list[dict[str, Any]]) -> None:
@@ -199,6 +208,10 @@ class AgentLoop:
                 finish=claim,
             )
         self.log.write("recheck", version_id=claim.version_id, validation=validation)
+        if validation.get("sandbox_timed_out"):
+            return self.end(
+                "failed", "limit reached: sandbox_seconds", finish=claim, validation=validation
+            )
         if validation.get("overall") == "ok":
             return self.end(
                 "passed",

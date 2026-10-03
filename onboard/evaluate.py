@@ -20,7 +20,7 @@ from onboard.fixtures import list_fixtures
 from onboard.manifest import read_manifest
 from onboard.rerun import rerun
 from onboard.run import run_task
-from onboard.sandbox import Sandbox
+from onboard.sandbox import Execution, Sandbox
 from onboard.task import resolve_task
 from onboard.validate import run_fixture, stage_inputs
 from reference.broken import IDS, build_variant
@@ -100,11 +100,10 @@ def hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[st
         variants = {}
         for variant in IDS:
             code = _code_dir(work / "variants" / variant, build_variant(variant), test_source)
-            execution = sandbox.run_tests(code)
+            outcome = _test_outcome(sandbox.run_tests(code))
             variants[variant] = {
-                "caught": baseline.ok and not execution.ok,
-                "tests_failed": not execution.ok,
-                "exit_code": execution.exit_code,
+                "caught": baseline.ok and outcome in CAUGHT,
+                "outcome": outcome,
             }
         result["variants"] = variants
         result["variants_caught"] = sum(v["caught"] for v in variants.values())
@@ -137,6 +136,21 @@ def safe_hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> di
             "injection": manifest.get("injection", {}),
             "hidden_check_error": repr(error),
         }
+
+
+# pytest exit codes: 1 means tests failed, 2 means collection was interrupted by an
+# error. Only those are evidence that the tests noticed the mistake; a timeout, an
+# internal error, or "no tests collected" is not.
+PYTEST_OUTCOMES = {0: "passed", 1: "tests failed", 2: "collection error", 5: "no tests"}
+CAUGHT = frozenset({"tests failed", "collection error"})
+
+
+def _test_outcome(execution: Execution) -> str:
+    if execution.timed_out:
+        return "timed out"
+    if execution.exit_code is None:
+        return "did not finish"
+    return PYTEST_OUTCOMES.get(execution.exit_code, f"pytest exit {execution.exit_code}")
 
 
 def _cell(result: dict[str, Any]) -> str:

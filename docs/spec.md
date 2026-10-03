@@ -202,7 +202,7 @@ Rules, each tied to a decision record where one exists:
 | Rule | Decision |
 |---|---|
 | Identifiers are written exactly as in the deposit, as text | [identifiers](decisions/identifiers.md) |
-| Conflicting duplicate factor records stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
+| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
 | A sample not measured in every selected analysis is excluded, with the reason in the summary | [unmeasured samples](decisions/unmeasured-samples.md) |
 | `Batch` and `Injection order` come only from same-named factors; otherwise blank | [technical columns](decisions/technical-columns.md) |
 | Samples whose sample-type factor is a control type are kept with a blank `Phenotype` | technical columns |
@@ -432,7 +432,10 @@ finalise run directory and manifest
 | Sandbox time per execution | 120 seconds |
 
 Hitting any limit ends the run as `failed (limit)`. A converter or test run
-stopped at the sandbox time limit counts as hitting that limit. Every version
+stopped at the sandbox time limit counts as hitting that limit, including during
+the recheck after `finish`. A `finish` in the same response that reached a
+limit does not excuse it. The request count is checked only before a new
+request, so the last permitted response may still call `finish`. Every version
 and log is kept.
 
 ### 9.4 System prompt (draft)
@@ -547,10 +550,13 @@ For the version being validated:
 2. **Execution on the task's deposit:** exit code, the last 2,000 characters of
    stderr, runtime.
 3. **Contract on the task's deposit:** the three files exist; the layout in
-   §6.1 holds; identifiers match the deposit exactly; the accounting rule in
-   §6.2 holds (list any sample missing or counted twice); `config.yaml`
-   points at the right rows and columns; technical columns are blank unless a
-   same-named factor exists.
+   §6.1 holds, including numbered header names; identifiers match the deposit
+   exactly; every metabolite cell is the deposit's value, blank where the
+   deposit's value is blank or absent; the accounting rule in §6.2 holds (list
+   any sample missing or counted twice); exclusion reasons and dropped
+   duplicates match what the deposit implies; `config.yaml` points at the
+   right rows and columns; technical columns are blank unless a same-named
+   factor exists.
 4. **Dev fixtures D1–D4:** run on each, compare with the expected files, and
    return a cell-level diff.
 5. **Generated tests:** run `test_prepare.py` against the version's own
@@ -597,8 +603,9 @@ its sibling converters, actually had and fixed:
 | B8 | A repeated metabolite name is numbered onto a name that already exists |
 
 A variant is **caught** if the agent's tests fail against it (one failing test,
-or a collection error, is enough) and the same tests pass against the reference
-converter. Without that second condition, a suite that fails everywhere (for
+or a collection error, is enough: pytest exit code 1 or 2) and the same tests
+pass against the reference converter. A timeout or any other outcome is
+recorded but not counted. Without that second condition, a suite that fails everywhere (for
 example, one that imports a helper only the agent's converter defines) would
 catch all 8. Report the catch rate out of 8. A test suite that passes against
 every variant fails this check even if its converter is correct.

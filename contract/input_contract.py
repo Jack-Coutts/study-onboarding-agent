@@ -66,6 +66,8 @@ class Deposit:
     measured: dict[str, set[str]]
     features_per_analysis: dict[str, int]
     feature_names: list[str]
+    feature_values: list[dict[str, str]]
+    dropped: list[dict[str, str]]
     phenotype_key: str
     rename: dict[str, str]
     keep: list[str] | None
@@ -94,13 +96,21 @@ class Deposit:
         raw = self.samples[sample].get(self.phenotype_key, "")
         return self.rename.get(raw, raw) if raw else ""
 
+    def reason(self, sample: str) -> str | None:
+        """Why a sample is excluded (spec 6.2, in its order), or None if it is kept."""
+        if not self.is_control(sample):
+            phenotype = self.phenotype(sample)
+            if not phenotype:
+                return "no phenotype"
+            if self.keep is not None and phenotype not in self.keep:
+                return f"phenotype not in keep: {phenotype}"
+        for analysis in self.analyses:
+            if sample not in self.measured[analysis]:
+                return f"not measured in {analysis}"
+        return None
+
     def must_keep(self, sample: str) -> bool:
-        if not all(sample in self.measured[a] for a in self.analyses):
-            return False
-        if self.is_control(sample):
-            return True
-        phenotype = self.phenotype(sample)
-        return bool(phenotype) and (self.keep is None or phenotype in self.keep)
+        return self.reason(sample) is None
 
 
 def _records(document: Any) -> list[dict[str, Any]]:
@@ -113,17 +123,25 @@ def _records(document: Any) -> list[dict[str, Any]]:
     return []
 
 
+def _canonical(value: Any) -> str:
+    return json.dumps(value, sort_keys=True)
+
+
 def _text(value: Any) -> str:
     return "" if value is None else str(value)
 
 
-def _factors(text: str) -> dict[str, str]:
-    factors = {}
+def _factors(text: str) -> tuple[dict[str, str], bool]:
+    """The record's factors, and whether one key appears with two different values."""
+    factors: dict[str, str] = {}
+    conflicting = False
     for part in text.split("|"):
         if part.strip():
             key, _, value = part.partition(":")
-            factors[key.strip()] = value.strip()
-    return factors
+            key, value = key.strip(), value.strip()
+            conflicting |= key in factors and factors[key] != value
+            factors[key] = value
+    return factors, conflicting
 
 
 def number_like_pandas(names: list[str]) -> list[str]:
@@ -158,8 +176,8 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     conflicts = []
     for record in _records(json.loads(factors_json.read_text(encoding="utf-8"))):
         sample = _text(record.get("local_sample_id"))
-        factors = _factors(_text(record.get("factors")))
-        if sample in samples and samples[sample] != factors:
+        factors, conflicting = _factors(_text(record.get("factors")))
+        if conflicting or (sample in samples and samples[sample] != factors):
             conflicts.append(sample)
         samples.setdefault(sample, factors)
 
@@ -170,16 +188,22 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     owner: dict[str, str] = {}
     features: Counter[str] = Counter()
     names: list[str] = []
+    values: list[dict[str, str]] = []
+    dropped: set[tuple[str, str, str]] = set()
     for analysis in analyses:
         for record in data:
             if _text(record.get("analysis_id")) != analysis:
                 continue
-            measured[analysis].update(_text(s) for s in (record.get("DATA") or {}))
-            name = _name(record)
-            if name and owner.setdefault(name, analysis) != analysis:
+            cells = record.get("DATA") or {}
+            measured[analysis].update(_text(s) for s in cells)
+            name = _name(record) or "unnamed"
+            # Unnamed features are never the same metabolite (decisions/metabolite-columns.md).
+            if name != "unnamed" and owner.setdefault(name, analysis) != analysis:
+                dropped.add((name, analysis, owner[name]))
                 continue
             features[analysis] += 1
-            names.append(name or "unnamed")
+            names.append(name)
+            values.append({_text(k): _text(v) for k, v in cells.items()})
 
     keys = {key for factors in samples.values() for key in factors}
     technical: dict[str, str | None] = {}
@@ -198,6 +222,10 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
         measured=measured,
         features_per_analysis=dict(features),
         feature_names=names,
+        feature_values=values,
+        dropped=[
+            {"metabolite": m, "analysis_id": a, "kept_from": k} for m, a, k in sorted(dropped)
+        ],
         phenotype_key=str(task.get("phenotype_key", "")),
         rename={str(k): str(v) for k, v in (task.get("map") or {}).items()},
         keep=[str(k) for k in keep] if keep is not None else None,
@@ -292,6 +320,8 @@ class _Checker:
             self.check_cells()
             self.check_features()
             self.check_config()
+            if self.header == self.deposit.expected_header:
+                self.check_values()
         self.check_accounting()
         self.check_summary()
         return self.violations
@@ -407,6 +437,23 @@ class _Checker:
                 if row[self.extra_at(key)] != d.samples[sample].get(key, ""):
                     self.fail("extra_factors", f"sample {sample!r} column {key!r} must match")
 
+    def check_values(self) -> None:
+        """Each metabolite cell is the deposit's value, as text; blank or missing stays blank."""
+        n, wrong = self.n_metadata, 0
+        for row in self.rows:
+            if len(row) != len(self.header) or row[0] not in self.deposit.samples:
+                continue
+            for j, values in enumerate(self.deposit.feature_values):
+                want, got = values.get(row[0], ""), row[n + j]
+                if got != want:
+                    wrong += 1
+                    if wrong <= 20:
+                        self.fail(
+                            "values",
+                            f"sample {row[0]!r}, column {self.header[n + j]!r} must be {want!r} "
+                            f"(blank when the deposit's value is blank or absent), got {got!r}",
+                        )
+
     def check_features(self) -> None:
         counts = Counter(self.method[self.n_metadata :])
         for analysis in self.deposit.analyses:
@@ -463,6 +510,23 @@ class _Checker:
         for key, want in expected.items():
             if self.summary[key] != want:
                 self.fail("summary", f"summary.json {key} must be {want!r}")
+        excluded = self.summary["excluded_samples"]
+        if isinstance(excluded, dict):
+            for sample, reason in sorted(excluded.items()):
+                if sample in self.deposit.samples and reason != self.deposit.reason(sample):
+                    self.fail(
+                        "summary",
+                        f"excluded_samples[{sample!r}] must be {self.deposit.reason(sample)!r}, "
+                        f"got {reason!r}",
+                    )
+        dropped = self.summary["duplicate_metabolites_dropped"]
+        if not isinstance(dropped, list) or sorted(dropped, key=_canonical) != sorted(
+            self.deposit.dropped, key=_canonical
+        ):
+            self.fail(
+                "summary",
+                f"duplicate_metabolites_dropped must list {self.deposit.dropped}, got {dropped}",
+            )
         from_factors = {c for c in TECHNICAL if tech[c]}
         blank = {c for c in ("Batch", "Injection order") if not tech[c]}
         if set(self.summary["technical_columns_from_factors"]) != from_factors:

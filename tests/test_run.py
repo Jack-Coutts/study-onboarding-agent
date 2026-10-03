@@ -229,7 +229,7 @@ def test_variants_are_not_caught_by_tests_that_fail_on_the_reference(tmp_path):
     run_dir = run_fixture(tmp_path).run_dir
     checks = hidden_checks(run_dir, FakeSandbox(tests_pass=False), root=REPO)
     assert checks["tests_pass_on_reference"] is False
-    assert all(v["tests_failed"] for v in checks["variants"].values())
+    assert all(v["outcome"] == "tests failed" for v in checks["variants"].values())
     assert checks["variants_caught"] == 0
     assert "fail on the reference converter" in render_results([checks], [])
 
@@ -266,3 +266,22 @@ def test_eval_adds_an_injection_run_and_keeps_it_out_of_the_totals(tmp_path):
     table = path.read_text()
     assert "ST900009 (injection run)" in table
     assert "| **Summary** | 2 runs | 1 passed |" in table
+
+
+class TimeoutOnVariants(FakeSandbox):
+    """Tests pass on the reference; every variant's test run hits the time limit."""
+
+    def run_tests(self, code_dir):
+        from onboard.sandbox import Execution
+
+        if "Broken variant" in (code_dir / "prepare.py").read_text():
+            return Execution(None, "", "stopped after 120 seconds", 120.0, True)
+        return super().run_tests(code_dir)
+
+
+def test_a_timed_out_variant_is_not_counted_as_caught(tmp_path):
+    run_dir = run_fixture(tmp_path).run_dir
+    checks = hidden_checks(run_dir, TimeoutOnVariants(), root=REPO)
+    assert checks["tests_pass_on_reference"] is True
+    assert checks["variants_caught"] == 0
+    assert all(v["outcome"] == "timed out" for v in checks["variants"].values())

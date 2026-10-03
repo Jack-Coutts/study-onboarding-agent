@@ -11,7 +11,7 @@ import json
 import re
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -224,7 +224,6 @@ class Tools:
     submissions: int = 0
     finish_claim: FinishClaim | None = None
     limit_hit: str | None = None
-    validations: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     @property
     def versions_dir(self) -> Path:
@@ -287,7 +286,6 @@ class Tools:
         if not (directory / "prepare.py").exists():
             return ToolResult(f"no version {version_id!r}; submit one first", True)
         result = self.validator(version_id, directory)
-        self.validations[version_id] = result
         (directory / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
         if result.get("sandbox_timed_out"):
             self.limit_hit = "sandbox_seconds"

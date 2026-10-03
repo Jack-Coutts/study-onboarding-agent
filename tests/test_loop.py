@@ -245,3 +245,47 @@ def test_every_request_response_and_tool_call_is_logged(tmp_path):
         "recheck",
         "status",
     ]
+
+
+# Findings from the Amp review of 641675d: a finish in the same response must not
+# bypass a limit that response reached.
+
+
+def test_a_finish_in_the_response_that_reaches_the_cost_limit_fails(tmp_path):
+    outcome, *_ = run(
+        tmp_path,
+        [response("tool_use", submit(), finish(), tokens=1000)],
+        config=_with_limits(usd=0.001),
+    )
+    assert (outcome.status, outcome.reason) == ("failed", "limit reached: usd")
+    assert outcome.finish is not None
+
+
+def test_a_finish_after_a_timed_out_validation_in_the_same_response_fails(tmp_path):
+    tools = make_tools(tmp_path)
+    tools.validator = lambda version_id, directory: {"overall": "fail", "sandbox_timed_out": True}
+    outcome, *_ = run(
+        tmp_path,
+        [response("tool_use", submit(), validate(), finish("needs_review"))],
+        tools=tools,
+    )
+    assert (outcome.status, outcome.reason) == ("failed", "limit reached: sandbox_seconds")
+
+
+def test_a_recheck_that_times_out_fails_the_run(tmp_path):
+    def recheck(version_id):
+        return {"overall": "fail", "sandbox_timed_out": True, "checks": {}}
+
+    outcome, *_ = run(
+        tmp_path, [response("tool_use", submit()), response("tool_use", finish())], recheck=recheck
+    )
+    assert (outcome.status, outcome.reason) == ("failed", "limit reached: sandbox_seconds")
+
+
+def test_the_last_permitted_request_may_finish(tmp_path):
+    outcome, *_ = run(
+        tmp_path,
+        [response("tool_use", submit()), response("tool_use", finish())],
+        config=_with_limits(requests=2),
+    )
+    assert outcome.status == "passed"
