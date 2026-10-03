@@ -155,3 +155,22 @@ def compare_result(exit_code: int, stderr: str, output_dir: Path, expected_dir: 
     if exit_code != 0:
         return [f"converter exited {exit_code}; expected it to succeed"]
     return compare_outputs(output_dir, expected_dir)
+
+
+def cell_agreement(actual: Path, expected: Path) -> tuple[int, int]:
+    """Matching data cells out of all expected data cells, aligned on sample and column."""
+    got, want = read_grid(actual), read_grid(expected)
+    if not want:
+        return 0, 0
+    header = want[0]
+    got_columns = {name: i for i, name in enumerate(got[0])} if got else {}
+    got_rows = {row[0]: row for row in got[2:] if row}
+    matching = total = 0
+    for row in want[2:]:
+        for j, column in enumerate(header):
+            total += 1
+            other = got_rows.get(row[0])
+            k = got_columns.get(column)
+            if other is not None and k is not None and k < len(other) and other[k] == row[j]:
+                matching += 1
+    return matching, total
