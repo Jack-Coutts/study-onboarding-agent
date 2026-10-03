@@ -7,11 +7,20 @@ import json
 import re
 import subprocess
 from pathlib import Path
+from typing import Any, Protocol, cast
 
 REPO = "Jack-Coutts/study-onboarding-agent"
 
+Comment = dict[str, Any]
 
-def github(path: str, payload: dict | None = None, *, paginate: bool = False):
+
+class Api(Protocol):
+    def __call__(
+        self, path: str, payload: dict[str, Any] | None = ..., *, paginate: bool = ...
+    ) -> Any: ...
+
+
+def github(path: str, payload: dict[str, Any] | None = None, *, paginate: bool = False) -> Any:
     command = ["gh", "api", path]
     if paginate:
         command += ["--paginate", "--slurp"]
@@ -28,7 +37,9 @@ def github(path: str, payload: dict | None = None, *, paginate: bool = False):
     return json.loads(result.stdout)
 
 
-def publish(pr: int, base: str, head: str, key: str, stage: str, body: str, api=github):
+def publish(
+    pr: int, base: str, head: str, key: str, stage: str, body: str, api: Api = github
+) -> Comment:
     if (
         pr < 1
         or stage not in {"scientific", "simplicity"}
@@ -49,10 +60,10 @@ def publish(pr: int, base: str, head: str, key: str, stage: str, body: str, api=
     marker = f"<!-- onboarding-review:{key}:{stage} -->"
     primary_marker = f"<!-- onboarding-review:{key}:scientific -->"
 
-    def comments():
+    def comments() -> list[Comment]:
         return [comment for page in api(comments_path, paginate=True) for comment in page]
 
-    def find(items, token):
+    def find(items: list[Comment], token: str) -> Comment | None:
         return next(
             (
                 item
@@ -78,8 +89,10 @@ def publish(pr: int, base: str, head: str, key: str, stage: str, body: str, api=
         f"Reviewed head: [{head[:7]}](https://github.com/{REPO}/commit/{head})."
     )
 
-    def merge_base(base_sha):
-        return api(f"repos/{REPO}/compare/{base_sha}...{head}")["merge_base_commit"]["sha"]
+    def merge_base(base_sha: str) -> str:
+        return cast(
+            str, api(f"repos/{REPO}/compare/{base_sha}...{head}")["merge_base_commit"]["sha"]
+        )
 
     # A base branch that only advanced keeps the reviewed diff; a retarget changes it.
     if current["head"]["sha"] != head:
@@ -91,7 +104,9 @@ def publish(pr: int, base: str, head: str, key: str, stage: str, body: str, api=
         )
     else:
         stale = ""
-    prior = f"\n\nInitial feedback: {primary['html_url']}" if stage == "simplicity" else ""
+    prior = (
+        f"\n\nInitial feedback: {primary['html_url']}" if primary and stage == "simplicity" else ""
+    )
     payload = {"body": f"{marker}\n## {title}\n\n{scope}{stale}{prior}\n\n{body.strip()}"}
     try:
         posted = api(comments_path, payload)
@@ -102,13 +117,13 @@ def publish(pr: int, base: str, head: str, key: str, stage: str, body: str, api=
         if recovered:
             return recovered
         raise
-    confirmed = api(f"repos/{REPO}/issues/comments/{posted['id']}")
+    confirmed: Comment = api(f"repos/{REPO}/issues/comments/{posted['id']}")
     if find([confirmed], marker) is None:
         raise ValueError("Posted comment could not be confirmed")
     return confirmed
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pr", type=int, required=True)
     parser.add_argument("--base", required=True)
