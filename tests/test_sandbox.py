@@ -137,3 +137,60 @@ def test_reference_converter_runs_in_the_sandbox(sandbox_image, tmp_path):
     execution = DockerSandbox(sandbox_image, 120).run_converter(code, inputs, tmp_path / "out")
     assert execution.ok, execution.stderr
     assert compare_result(0, "", tmp_path / "out", fixture.expected) == []
+
+
+def test_collect_outputs_keeps_only_regular_top_level_files(tmp_path):
+    from onboard.sandbox import collect_outputs
+
+    secret = tmp_path / "heldout_expected.csv"
+    secret.write_text("held-out answer")
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    (raw / "summary.json").write_text("{}")
+    (raw / "prepared.csv").symlink_to(secret)
+    (raw / "config.yaml").symlink_to("../heldout_expected.csv")
+    (raw / "nested").mkdir()
+    (raw / "nested" / "x.txt").write_text("x")
+
+    problems = collect_outputs(raw, tmp_path / "out")
+
+    assert sorted(p.name for p in (tmp_path / "out").iterdir()) == ["summary.json"]
+    assert len(problems) == 3
+    assert all("not a regular file" in p or "directory" in p for p in problems)
+
+
+def test_collect_outputs_skips_oversized_files(tmp_path, monkeypatch):
+    import onboard.sandbox
+
+    monkeypatch.setattr(onboard.sandbox, "OUTPUT_FILE_LIMIT", 10)
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    (raw / "prepared.csv").write_text("x" * 11)
+    problems = onboard.sandbox.collect_outputs(raw, tmp_path / "out")
+    assert not (tmp_path / "out" / "prepared.csv").exists()
+    assert "larger than" in problems[0]
+
+
+@pytest.mark.docker
+def test_symlinks_written_by_generated_code_are_not_followed(sandbox_image, tmp_path):
+    (tmp_path / "secret.txt").write_text("held-out answer")
+    code = tmp_path / "code"
+    code.mkdir()
+    (code / "prepare.py").write_text(
+        "import os\n"
+        "os.symlink('../../secret.txt', '/output/prepared.csv')\n"
+        "os.symlink('/proc/self/environ', '/output/summary.json')\n"
+        "os.makedirs('/output/sub/deeper')\n"
+        "open('/output/sub/deeper/f.txt', 'w').write('x')\n"
+        "open('/output/config.yaml', 'w').write('ok: 1\\n')\n"
+    )
+    (tmp_path / "in").mkdir()
+    out = tmp_path / "work" / "out"
+    execution = DockerSandbox(sandbox_image, 60).run_converter(code, tmp_path / "in", out)
+
+    assert execution.exit_code == 0, execution.stderr
+    assert sorted(p.name for p in out.iterdir()) == ["config.yaml"]
+    assert "prepared.csv" in execution.stderr and "not a regular file" in execution.stderr
+    import shutil
+
+    shutil.rmtree(tmp_path / "work")  # the host can clean up what the container wrote

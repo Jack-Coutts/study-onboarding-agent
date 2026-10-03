@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import stat
 import subprocess
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
@@ -21,6 +23,7 @@ from onboard.config import ROOT, Config
 
 CHECK_RECORD = ROOT / "runs" / "sandbox-check.json"
 STDERR_TAIL = 2000
+OUTPUT_FILE_LIMIT = 50 * 1024 * 1024
 
 
 class SandboxError(RuntimeError):
@@ -156,17 +159,60 @@ class DockerSandbox:
         )
 
     def run_converter(self, code_dir: Path, input_dir: Path, output_dir: Path) -> Execution:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_dir.chmod(0o777)  # the container user is not the host user
+        """Run prepare.py; output_dir receives only the regular files it wrote.
+
+        The container writes to a separate raw directory. The host never reads it
+        directly: generated code could leave symlinks there pointing at held-out
+        expectations or the harness's own environment.
+        """
+        raw = output_dir.with_name(output_dir.name + ".raw")
+        if raw.exists():
+            shutil.rmtree(raw)
+        raw.mkdir(parents=True)
+        raw.chmod(0o777)  # the container user is not the host user
         mounts = [
             Mount(code_dir, "/code", read_only=True),
             Mount(input_dir, "/input", read_only=True),
-            Mount(output_dir, "/output", read_only=False),
+            Mount(raw, "/output", read_only=False),
         ]
-        return self.execute(mounts, CONVERTER_ARGS)
+        execution = self.execute(mounts, CONVERTER_ARGS)
+        self._release(raw)
+        problems = collect_outputs(raw, output_dir)
+        if problems:
+            notes = "".join(f"\nharness: {problem}" for problem in problems)
+            execution = replace(execution, stderr=execution.stderr + notes)
+        return execution
+
+    def _release(self, raw: Path) -> None:
+        """Let the host delete what the container wrote in subdirectories."""
+        if any(entry.is_dir(follow_symlinks=False) for entry in os.scandir(raw)):
+            self.execute(
+                [Mount(raw, "/output", read_only=False)], ["chmod", "-R", "a+rwX", "/output"]
+            )
 
     def run_tests(self, code_dir: Path) -> Execution:
         return self.execute([Mount(code_dir, "/code", read_only=True)], TEST_ARGS)
+
+
+def collect_outputs(raw: Path, target: Path) -> list[str]:
+    """Copy regular top-level files from raw to target without following links."""
+    target.mkdir(parents=True, exist_ok=True)
+    problems = []
+    for entry in sorted(os.scandir(raw), key=lambda e: e.name):
+        info = entry.stat(follow_symlinks=False)
+        if stat.S_ISDIR(info.st_mode):
+            problems.append(f"ignored {entry.name}/: outputs must be files, not a directory")
+            continue
+        if not stat.S_ISREG(info.st_mode):
+            problems.append(f"ignored {entry.name}: not a regular file")
+            continue
+        if info.st_size > OUTPUT_FILE_LIMIT:
+            problems.append(f"ignored {entry.name}: larger than {OUTPUT_FILE_LIMIT} bytes")
+            continue
+        descriptor = os.open(entry.path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(descriptor, "rb") as source, (target / entry.name).open("wb") as sink:
+            shutil.copyfileobj(source, sink)
+    return problems
 
 
 def _text(value: str | bytes | None) -> str:
