@@ -18,6 +18,9 @@ For example, ask an agent to "Read
 `.agents/skills/testing-scientific-code/SKILL.md` and use it for this change."
 Ask for poteto-mode to apply the router, or unslop to apply the prose skill.
 These are natural-language triggers, not guaranteed slash-command aliases.
+In Claude Code, `.claude/skills` links to this directory, so each skill is also a
+slash command, such as `/applying-ponytail-mode`. Every skill sets
+`disable-model-invocation: true`, so an agent runs one only when asked.
 
 ## Skills
 
