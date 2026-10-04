@@ -1,6 +1,6 @@
 Samples,Phenotype,Age,Genotype,Sample type,Batch,Injection order,Tryptophan,Kynurenine
 METHOD,,,,,,,AN000301,AN000301
-B1,,,,blank,,,,0.01
+B1,,,,Blank,,,,0.01
 M1,Control,8,wild type,subject,,,3.1,0.2
 M2,Drug,10,knockout,subject,,,2.9,0.4
 M3,Control,,knockout,subject,,,3.0,0.3

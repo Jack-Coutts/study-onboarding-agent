@@ -102,7 +102,7 @@ def load_task(path: Path) -> Task:
     )
 
 
-def parse_factors(text: str) -> dict[str, str]:
+def parse_factors(text: str, sample_id: str) -> dict[str, str]:
     """Parse "Key:value | Key2:value2". A value may itself contain ':'."""
     factors: dict[str, str] = {}
     for part in text.split("|"):
@@ -111,7 +111,9 @@ def parse_factors(text: str) -> dict[str, str]:
         key, _, value = part.partition(":")
         key, value = key.strip(), value.strip()
         if key in factors and factors[key] != value:
-            raise ConversionError(f"factor {key!r} has two values in one record: {text!r}")
+            raise ConversionError(
+                f"sample {sample_id!r} gives factor {key!r} two values in one record: {text!r}"
+            )
         factors[key] = value
     return factors
 
@@ -124,7 +126,7 @@ def read_samples(records: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
         sample_id = _identifier(record.get("local_sample_id"))
         if not sample_id:
             raise ConversionError(f"factor record {number} has no local_sample_id")
-        factors = parse_factors(_value(record.get("factors")))
+        factors = parse_factors(_value(record.get("factors")), sample_id)
         if sample_id in samples:
             if samples[sample_id] != factors:
                 raise ConversionError(
@@ -138,20 +140,24 @@ def read_samples(records: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
     return samples
 
 
-def technical_keys(samples: dict[str, dict[str, str]]) -> dict[str, str | None]:
-    """The deposit's factor key for each technical column, matched case-insensitively."""
+def technical_keys(samples: dict[str, dict[str, str]]) -> dict[str, set[str]]:
+    """Every spelling of each technical column's factor, matched case-insensitively.
+
+    Samples may spell a factor differently (`Batch`, `batch`); they name one column.
+    """
     keys = {key for factors in samples.values() for key in factors}
-    found: dict[str, str | None] = {}
-    for column in TECHNICAL:
-        matches = sorted(key for key in keys if key.casefold() == column.casefold())
-        if len(matches) > 1:
-            raise ConversionError(f"factors {matches} all name the {column!r} column")
-        found[column] = matches[0] if matches else None
-    return found
+    return {column: {k for k in keys if k.casefold() == column.casefold()} for column in TECHNICAL}
 
 
-def _technical(factors: dict[str, str], key: str | None) -> str:
-    return factors.get(key, "") if key is not None else ""
+def _technical(sample_id: str, factors: dict[str, str], keys: set[str]) -> str:
+    """The sample's value for a technical column; two different values stop the run."""
+    values = {factors[key] for key in keys if key in factors}
+    if len(values) > 1:
+        named = sorted(key for key in keys if key in factors)
+        raise ConversionError(
+            f"sample {sample_id!r} gives factors {named} different values: {sorted(values)}"
+        )
+    return values.pop() if values else ""
 
 
 def number_repeated(names: list[str]) -> list[str]:
@@ -231,7 +237,7 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
     if not any(task.phenotype_key in factors for factors in samples.values()):
         raise ConversionError(f"no sample has the phenotype factor {task.phenotype_key!r}")
     tech = technical_keys(samples)
-    reserved = {task.phenotype_key, *(key for key in tech.values() if key is not None)}
+    reserved = {task.phenotype_key, *(key for keys in tech.values() for key in keys)}
     extra_keys = sorted(
         {key for factors in samples.values() for key in factors if key not in reserved}
     )
@@ -244,13 +250,19 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
     features, dropped, measured = select_features(data_records, analyses)
 
     controls = {kind.casefold() for kind in task.control_sample_types}
+    # Read every sample's technical values before any filtering, so a conflict
+    # stops the run even in a sample that would be excluded.
+    technical = {
+        sample_id: {c: _technical(sample_id, factors, tech[c]) for c in TECHNICAL}
+        for sample_id, factors in samples.items()
+    }
     rows: list[list[str]] = []
     excluded: dict[str, str] = {}
     phenotypes: Counter[str] = Counter()
     control_types: set[str] = set()
     for sample_id in sorted(samples):
         sample_factors = samples[sample_id]
-        sample_type = _technical(sample_factors, tech[SAMPLE_TYPE])
+        sample_type = technical[sample_id][SAMPLE_TYPE]
         is_control = sample_type.casefold() in controls
         raw_phenotype = sample_factors.get(task.phenotype_key, "")
         phenotype = task.rename.get(raw_phenotype, raw_phenotype)
@@ -276,8 +288,8 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
                 phenotype,
                 *(sample_factors.get(key, "") for key in extra_keys),
                 sample_type if is_control else SUBJECT,
-                _technical(sample_factors, tech[BATCH]),
-                _technical(sample_factors, tech[INJECTION_ORDER]),
+                technical[sample_id][BATCH],
+                technical[sample_id][INJECTION_ORDER],
                 *(feature.values.get(sample_id, "") for feature in features),
             ]
         )
@@ -300,8 +312,8 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
         "extra_factor_keys": extra_keys,
         "excluded_samples": excluded,
         "duplicate_metabolites_dropped": dropped,
-        "technical_columns_from_factors": [c for c in TECHNICAL if tech[c] is not None],
-        "blank_technical_columns": [c for c in (BATCH, INJECTION_ORDER) if tech[c] is None],
+        "technical_columns_from_factors": [c for c in TECHNICAL if tech[c]],
+        "blank_technical_columns": [c for c in (BATCH, INJECTION_ORDER) if not tech[c]],
     }
     (output / "summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

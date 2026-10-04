@@ -61,7 +61,6 @@ class Violation:
 class Deposit:
     samples: dict[str, dict[str, str]]
     conflicts: list[str]
-    ambiguous_technical: list[str]
     analyses: list[str]
     measured: dict[str, set[str]]
     features_per_analysis: dict[str, int]
@@ -72,11 +71,12 @@ class Deposit:
     rename: dict[str, str]
     keep: list[str] | None
     control_types: set[str]
-    technical_keys: dict[str, str | None]
+    # Every spelling of each technical factor; samples may spell it differently.
+    technical_keys: dict[str, set[str]]
 
     @property
     def extra_keys(self) -> list[str]:
-        reserved = {self.phenotype_key, *(k for k in self.technical_keys.values() if k)}
+        reserved = {self.phenotype_key, *(k for keys in self.technical_keys.values() for k in keys)}
         keys = {key for factors in self.samples.values() for key in factors}
         return sorted(keys - reserved)
 
@@ -85,9 +85,15 @@ class Deposit:
         metadata = [SAMPLES, PHENOTYPE, *self.extra_keys, *TECHNICAL]
         return number_like_pandas(metadata + self.feature_names)
 
+    def technical(self, sample: str, column: str) -> str:
+        """The sample's value under any spelling of the column's factor.
+
+        Two different values are a conflict, which load_deposit records."""
+        factors = self.samples[sample]
+        return next((factors[k] for k in sorted(self.technical_keys[column]) if k in factors), "")
+
     def sample_type(self, sample: str) -> str:
-        key = self.technical_keys["Sample type"]
-        return self.samples[sample].get(key, "") if key else ""
+        return self.technical(sample, "Sample type")
 
     def is_control(self, sample: str) -> bool:
         return self.sample_type(sample).casefold() in self.control_types
@@ -206,18 +212,15 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
             values.append({_text(k): _text(v) for k, v in cells.items()})
 
     keys = {key for factors in samples.values() for key in factors}
-    technical: dict[str, str | None] = {}
-    ambiguous = []
-    for column in TECHNICAL:
-        matches = sorted(k for k in keys if k.casefold() == column.casefold())
-        technical[column] = matches[0] if len(matches) == 1 else None
-        if len(matches) > 1:
-            ambiguous += matches
+    technical = {c: {k for k in keys if k.casefold() == c.casefold()} for c in TECHNICAL}
+    for sample, factors in samples.items():
+        for spellings in technical.values():
+            if len({factors[k] for k in spellings if k in factors}) > 1:
+                conflicts.append(sample)
     keep = task.get("keep")
     return Deposit(
         samples=samples,
         conflicts=sorted(set(conflicts)),
-        ambiguous_technical=ambiguous,
         analyses=analyses,
         measured=measured,
         features_per_analysis=dict(features),
@@ -239,16 +242,14 @@ def check_contract(
 ) -> list[Violation]:
     """Every rule in spec section 6 that the output breaks for this deposit."""
     deposit = load_deposit(factors_json, data_json, task_yaml)
-    if deposit.conflicts or deposit.ambiguous_technical:
+    if deposit.conflicts:
         if not (output_dir / "prepared.csv").exists():
             return []
-        if deposit.conflicts:
-            detail = f"samples {deposit.conflicts} have conflicting factor records"
-        else:
-            detail = f"factors {deposit.ambiguous_technical} all name one technical column"
         return [
             Violation(
-                "conflicts", f"{detail}; the converter must stop with an error, not write output"
+                "conflicts",
+                f"samples {deposit.conflicts} have conflicting factor values; the converter "
+                "must stop with an error, not write output",
             )
         ]
     files = _load_outputs(output_dir)
@@ -424,11 +425,13 @@ class _Checker:
                 if row[sample_type] != SUBJECT:
                     self.fail("sample_type", f"sample {sample!r} must have Sample type 'subject'")
             for column in ("Batch", "Injection order"):
-                key = d.technical_keys[column]
-                want = d.samples[sample].get(key, "") if key else ""
+                keys = sorted(d.technical_keys[column])
+                want = d.technical(sample, column)
                 got = row[self.technical_at(column)]
                 if got != want:
-                    source = f"factor {key!r}" if key else "nothing: the deposit has no such factor"
+                    source = (
+                        f"factors {keys}" if keys else "nothing: the deposit has no such factor"
+                    )
                     self.fail(
                         "technical",
                         f"sample {sample!r} {column} must be {want!r}, from {source}; got {got!r}",

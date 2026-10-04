@@ -25,7 +25,7 @@
     "local_sample_id": "B1",
     "mb_sample_id": "SA900004",
     "sample_source": "Plasma",
-    "factors": "Sample type:blank"
+    "factors": "SAMPLE TYPE:Blank"
   },
   "5": {
     "study_id": "ST900003",

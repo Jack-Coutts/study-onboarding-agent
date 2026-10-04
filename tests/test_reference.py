@@ -85,3 +85,21 @@ def test_repeated_names_are_numbered_as_pandas_reads_them(header, pandas_columns
     from reference.workbench_rest import number_repeated
 
     assert number_repeated(header) == pandas_columns
+
+
+def test_a_record_giving_one_factor_two_values_names_its_sample(tmp_path):
+    # Found by a gpt-6.1-sol run's tests: the error named the factor but not the sample.
+    import json
+
+    from reference.workbench_rest import ConversionError, prepare
+
+    (tmp_path / "f.json").write_text(
+        json.dumps({"1": {"local_sample_id": "S07", "factors": "Group:case | Group:control"}})
+    )
+    (tmp_path / "d.json").write_text(
+        json.dumps({"1": {"analysis_id": "AN1", "metabolite_name": "m", "DATA": {"S07": "1"}}})
+    )
+    (tmp_path / "t.yaml").write_text("phenotype_key: Group\n")
+    with pytest.raises(ConversionError, match="S07"):
+        prepare(tmp_path / "f.json", tmp_path / "d.json", tmp_path / "t.yaml", tmp_path / "out")
+    assert not (tmp_path / "out").exists()

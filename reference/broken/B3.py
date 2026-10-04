@@ -3,7 +3,7 @@
 MISTAKE = "`Batch` and `Injection order` filled in when the deposit has no such factor"
 REPLACEMENTS = [
     (
-        '    return factors.get(key, "") if key is not None else ""',
-        '    return factors.get(key, "") if key is not None else "1"',
+        '    return values.pop() if values else ""',
+        '    return values.pop() if values else ("" if keys else "1")',
     )
 ]
