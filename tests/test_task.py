@@ -83,3 +83,51 @@ def test_runs_refuse_an_unfinished_draft(tmp_path):
         resolve_task(path, root=root)
     path.write_text(path.read_text().replace("phenotype_key: CHOOSE", "phenotype_key: Treatment"))
     assert resolve_task(path, root=root).study_id == "ST000123"
+
+
+# Amp review of 435a7d4: deposit text must stay inside comments, and the lock
+# must find CHOOSE anywhere in the task's values.
+@pytest.mark.parametrize("brk", ["\n", "\r", " ", "\x85"])
+def test_factor_text_cannot_add_task_settings(tmp_path, brk):
+    factors = {
+        "1": {"local_sample_id": "A1", "factors": f"Group:control | Notes:ok{brk}keep: [case] #"},
+        "2": {"local_sample_id": "A2", "factors": f"Group:case | Sample type:QC{brk}map: {{a: b}}"},
+        "3": {"local_sample_id": "A3", "factors": f"Bad{brk}analyses: [AN9]:x | Group:case"},
+    }
+    text = draft_task("ST000123", root=fetched(tmp_path, factors)).read_text()
+    assert set(yaml.safe_load(text)) == {
+        "study_id",
+        "phenotype_key",
+        "analyses",
+        "control_sample_types",
+    }
+    assert yaml.safe_load(text)["analyses"] == ["AN000001", "AN000002"]
+    for line in text.splitlines():
+        assert (
+            line.startswith("#")
+            or not line
+            or line.split(":")[0]
+            in {"study_id", "phenotype_key", "analyses", "control_sample_types"}
+        ), line
+
+
+@pytest.mark.parametrize(
+    "unfinished",
+    [
+        "map: {case: CHOOSE}",
+        "map: {CHOOSE: case}",
+        "keep: [CHOOSE]",
+        "analyses: [CHOOSE]",
+        "control_sample_types: [QC, CHOOSE]",
+    ],
+)
+def test_runs_refuse_choose_anywhere_in_the_values(tmp_path, unfinished):
+    root = fetched(tmp_path)
+    path = draft_task("ST000123", root=root)
+    text = path.read_text().replace("phenotype_key: CHOOSE", "phenotype_key: Treatment")
+    key = unfinished.split(":")[0]
+    path.write_text(
+        "\n".join(l for l in text.splitlines() if not l.startswith(f"{key}:")) + f"\n{unfinished}\n"
+    )
+    with pytest.raises(TaskError, match=key):
+        resolve_task(path, root=root)

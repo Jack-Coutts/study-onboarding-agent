@@ -40,7 +40,7 @@ def resolve_task(task_path: Path, root: Path = ROOT) -> TaskInputs:
     task = yaml.safe_load(task_path.read_text(encoding="utf-8"))
     if not isinstance(task, dict) or not task.get("study_id"):
         raise TaskError(f"{task_path} must set study_id")
-    unfinished = sorted(key for key, value in task.items() if value == DRAFT_MARK)
+    unfinished = sorted(key for key, value in task.items() if _has_mark(value))
     if unfinished:
         raise TaskError(f"{task_path} is an unfinished draft: set {unfinished}, now {DRAFT_MARK}")
     study_id = str(task["study_id"])
@@ -65,8 +65,23 @@ def freeze_inputs(task: TaskInputs, target: Path) -> Path:
     return target
 
 
+def _has_mark(value: Any) -> bool:
+    """Whether CHOOSE is left anywhere in a task value, including keys and list items."""
+    if isinstance(value, dict):
+        return any(_has_mark(k) or _has_mark(v) for k, v in value.items())
+    if isinstance(value, list):
+        return any(_has_mark(item) for item in value)
+    return value == DRAFT_MARK
+
+
+def _comment(text: Any, limit: int = 60) -> str:
+    """Third-party text made safe for a YAML comment: every line break, of any kind,
+    becomes a space, so the text cannot start a new line of task settings."""
+    return " ".join(str(text).split())[:limit]
+
+
 def _counts(values: dict[str, Any]) -> str:
-    return ", ".join(f"{value} ({count})" for value, count in values.items())
+    return ", ".join(f"{_comment(value)} ({count})" for value, count in values.items())
 
 
 def draft_task(study_id: str, root: Path = ROOT) -> Path:
@@ -88,9 +103,9 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
     factors = factors_digest(deposit_records(load("factors.json")))
     analyses = sorted(data_digest(deposit_records(load("data.json")))["analyses"])
     summary = load("summary.json")
-    title = " ".join(str(summary.get("study_title", "")).split())[:100]
+    title = _comment(summary.get("study_title", ""), limit=100)
     keys: dict[str, dict[str, Any]] = factors["factor_keys"]
-    width = max((len(key) for key in keys), default=0)
+    width = max((len(_comment(key)) for key in keys), default=0)
 
     def technical(name: str) -> dict[str, Any] | None:
         return next((v for k, v in keys.items() if k.casefold() == name.casefold()), None)
@@ -102,7 +117,7 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
         f"study_id: {study_id}",
         "",
         "# CHOOSE the outcome to compare. Factors in this study:",
-        *(f"#   {key:<{width}}  {_counts(values)}" for key, values in keys.items()),
+        *(f"#   {_comment(key):<{width}}  {_counts(values)}" for key, values in keys.items()),
         f"phenotype_key: {DRAFT_MARK}",
         "",
         "# Optional: rename outcome labels, e.g. {Healthy control: control}",
