@@ -181,7 +181,7 @@ def _top(counter: Counter[str]) -> dict[str, Any]:
     return top
 
 
-def _factors_digest(records: list[Any]) -> dict[str, Any]:
+def factors_digest(records: list[Any]) -> dict[str, Any]:
     values: dict[str, Counter[str]] = {}
     samples = set()
     for record in records:
@@ -199,7 +199,7 @@ def _factors_digest(records: list[Any]) -> dict[str, Any]:
     }
 
 
-def _data_digest(records: list[Any]) -> dict[str, Any]:
+def data_digest(records: list[Any]) -> dict[str, Any]:
     analyses: Counter[str] = Counter()
     units: Counter[str] = Counter()
     for record in records:
@@ -261,7 +261,7 @@ class Tools:
             "records": [_truncate(r) for r in records[offset : offset + limit]],
         }
         if offset == 0:
-            digest = _factors_digest if part == "factors" else _data_digest
+            digest = factors_digest if part == "factors" else data_digest
             page["digest"] = digest(records)
         return ToolResult(data_block(page))
 

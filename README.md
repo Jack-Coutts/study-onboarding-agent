@@ -146,6 +146,7 @@ to `studies/<study-id>/` with notes on how to re-run it.
 | Command | Purpose |
 |---|---|
 | `onboard fetch ST000123` | Download and freeze a public study |
+| `onboard draft-task ST000123` | Pre-fill a task file from that study, for you to finish |
 | `onboard check-sandbox [--build]` | Build or verify the sandbox and run the isolation probe |
 | `onboard run TASK.yaml [--model M] [--effort E]` | One agent run |
 | `onboard rerun DIR` | Re-run an accepted converter with no model call |
