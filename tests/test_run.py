@@ -347,3 +347,23 @@ def test_study_analysis_ids_never_reach_the_model_through_a_draft(tmp_path):
 
     assert "SYSTEM NOTE" not in json.dumps(client.requests[0]["messages"])
     assert "SYSTEM NOTE" not in json.dumps(client.requests[1]["messages"][-1])
+
+
+def test_workbench_metadata_links_are_not_flagged_as_instructions(tmp_path):
+    # Real summaries carry license_url and study_url; a link there is metadata.
+    from onboard.injection import suspicious_text
+
+    inputs = tmp_path / "inputs"
+    shutil.copytree(
+        REPO / "fixtures" / "dev" / "D1", inputs, ignore=shutil.ignore_patterns("expected")
+    )
+    summary = json.loads((inputs / "summary.json").read_text())
+    summary["license_url"] = "https://creativecommons.org/licenses/by/4.0/"
+    summary["study_url"] = "https://www.metabolomicsworkbench.org/data/DRCCMetadata.php?StudyID=ST1"
+    (inputs / "summary.json").write_text(json.dumps(summary))
+    assert suspicious_text(inputs) == []
+
+    # A link elsewhere, or instruction-like text, is still flagged.
+    summary["study_title"] = "see https://example.com/update"
+    (inputs / "summary.json").write_text(json.dumps(summary))
+    assert [f["where"] for f in suspicious_text(inputs)] == ["summary.study_title"]

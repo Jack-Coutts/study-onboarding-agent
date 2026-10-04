@@ -44,7 +44,10 @@ def suspicious_text(inputs_dir: Path) -> list[dict[str, str]]:
     for name in ("summary.json", "factors.json", "data.json"):
         document = json.loads((inputs_dir / name).read_text(encoding="utf-8"))
         for where, text in _strings(document, name.removesuffix(".json")):
-            if INSTRUCTION.search(text) or URL.search(text):
+            # Workbench summaries always carry license_url and study_url; a link in
+            # one of those fields is metadata, not a lure. Links elsewhere count.
+            metadata_link = where.startswith("summary.") and where.endswith("_url")
+            if INSTRUCTION.search(text) or (URL.search(text) and not metadata_link):
                 found.append({"where": where, "text": text[:500]})
     return found
 

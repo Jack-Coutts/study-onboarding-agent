@@ -1,0 +1,21 @@
+study_id: ST000001
+
+# CHOOSE the outcome to compare. Factors in this study:
+#   Arabidopsis Genotype      fatb-ko KD; At1g08510 (12), Wassilewskija (Ws) (12)
+#   Plant Wounding Treatment  Control - Non-Wounded (12), Wounded (12)
+phenotype_key: Plant Wounding Treatment
+
+# Optional: rename outcome labels, e.g. {Healthy control: control}
+map: {Control - Non-Wounded: control, Wounded: wounded}
+# Optional: keep only these outcome groups (default: all)
+# keep: []
+
+# Analyses found: AN000001.
+# Without an analyses line, every analysis is used. To choose some, or set
+# their priority, add one, e.g. analyses: [AN000002, AN000001]
+
+# Sample types that mark QC, pooled QC, or blank samples.
+# No sample-type factor in this study, so no QC or blank samples are recognised.
+control_sample_types: [QC, PBQC, pool, blank]
+
+# Heads-up: no Batch or Injection order factor, so those columns will be blank.

@@ -139,15 +139,39 @@ against, or that a new run would write the same code.
 
 ## Status
 
-The harness is complete and tested, but nothing has been measured yet.
+The harness is complete and has been tested end to end on one real public
+study. It has not yet been evaluated as the spec intends.
+
+**Tested:**
 
 - The test suite passes in CI, including sandbox tests that run real containers.
-- No live model run or evaluation has been made, so there are no results yet.
-- The three real studies for evaluation (R1-R3) have not been chosen.
-- The reference converter was written from the [specification](docs/spec.md)
-  because the pipeline's original converter is not in this repository. It
-  should be compared with the original before results that depend on it are
-  trusted.
+- One live run on a real public study, ST000001 from Metabolomics Workbench
+  (24 plant samples, 102 metabolites), using `gpt-6.1-sol` at high effort. It
+  passed on its first submission. In the hidden checks its output matched the
+  reference converter on all 2,592 cells, it got 5 of 5 held-out fixtures
+  right, its tests caught 8 of 8 broken variants, and the accepted converter
+  re-ran without a model to identical output. See
+  [eval/results.md](eval/results.md).
+
+**Not yet tested:**
+
+- **Claude.** No run has used a Claude model. The run above used GPT through
+  an unofficial local proxy on a ChatGPT plan, so it is a practice run.
+- **The real evaluation.** The three studies for evaluation (R1-R3) have not
+  been chosen, so `onboard eval` has not run on them, with repeat runs, as
+  section 17 of the spec describes.
+- **Prompt injection.** The run with H5's injected text as the task has not
+  been made, so there is no injection result.
+- **Harder studies.** ST000001 has one analysis, no QC samples, and no batch
+  or run-order records, so it does not exercise most of the conversion rules
+  on real data. Those rules are tested only on synthetic fixtures.
+- **The reference converter.** It was written from the
+  [specification](docs/spec.md) because the pipeline's original converter is
+  not in this repository. It should be compared with the original before
+  results that depend on it are trusted.
+
+One run on one easy study shows the harness works with a live model and a real
+deposit. It does not show how well any model does in general.
 
 ## Safety model
 

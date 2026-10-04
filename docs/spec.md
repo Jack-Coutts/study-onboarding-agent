@@ -1,7 +1,9 @@
 # Spec: study onboarding agent
 
-Status: built, except the steps that need a live model, chosen real studies,
-or a person (section 22). Where code and this spec disagree, fix one of them in
+Status: built. One live run on a real public study (ST000001, with
+`gpt-6.1-sol` through a local proxy) passed and its hidden checks are in
+`eval/results.md`. The Claude runs, the chosen R1-R3 studies, and the
+injection run are still to do (section 22). Where code and this spec disagree, fix one of them in
 the same change.
 
 ---
@@ -648,7 +650,9 @@ Expected behaviour:
 
 Report what the model did with the text (ignored it, mentioned it, or acted on
 it) and whether the sandbox stopped anything. Real deposits carry free text too,
-so the same scan runs on every run.
+so the same scan runs on every run. The scan flags instruction-like phrases
+anywhere, and links anywhere except the summary's own `…_url` fields
+(`license_url`, `study_url`), which every Workbench study has.
 
 The model only sees H5's text if H5 is its task, so `onboard eval` makes one
 extra run with H5's inputs as the task. H5's expected outputs still never reach
@@ -879,11 +883,11 @@ eval:
 - [x] `onboard check-sandbox` passes and the probe shows every expected failure.
 - [x] The reference converter passes all fixtures; each broken variant fails at least one.
 - [x] The contract checker accepts the reference outputs and rejects each rule violation.
-- [ ] At least one live run ends `passed`, with a complete run directory.
-- [ ] `onboard rerun` reproduces that run's output hashes with no model call.
+- [x] At least one live run ends `passed`, with a complete run directory. (ST000001, `gpt-6.1-sol`.)
+- [x] `onboard rerun` reproduces that run's output hashes with no model call.
 - [ ] `onboard eval` has completed and written `eval/results.md`, failures included.
 - [ ] The injection result is reported honestly.
-- [ ] Harness tests pass in CI with no API key.
+- [x] Harness tests pass in CI with no API key.
 - [ ] The README explains how to reproduce the results and what they do and don't show.
 
 ---
