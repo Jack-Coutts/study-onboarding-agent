@@ -250,13 +250,19 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
     features, dropped, measured = select_features(data_records, analyses)
 
     controls = {kind.casefold() for kind in task.control_sample_types}
+    # Read every sample's technical values before any filtering, so a conflict
+    # stops the run even in a sample that would be excluded.
+    technical = {
+        sample_id: {c: _technical(sample_id, factors, tech[c]) for c in TECHNICAL}
+        for sample_id, factors in samples.items()
+    }
     rows: list[list[str]] = []
     excluded: dict[str, str] = {}
     phenotypes: Counter[str] = Counter()
     control_types: set[str] = set()
     for sample_id in sorted(samples):
         sample_factors = samples[sample_id]
-        sample_type = _technical(sample_id, sample_factors, tech[SAMPLE_TYPE])
+        sample_type = technical[sample_id][SAMPLE_TYPE]
         is_control = sample_type.casefold() in controls
         raw_phenotype = sample_factors.get(task.phenotype_key, "")
         phenotype = task.rename.get(raw_phenotype, raw_phenotype)
@@ -282,8 +288,8 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
                 phenotype,
                 *(sample_factors.get(key, "") for key in extra_keys),
                 sample_type if is_control else SUBJECT,
-                _technical(sample_id, sample_factors, tech[BATCH]),
-                _technical(sample_id, sample_factors, tech[INJECTION_ORDER]),
+                technical[sample_id][BATCH],
+                technical[sample_id][INJECTION_ORDER],
                 *(feature.values.get(sample_id, "") for feature in features),
             ]
         )

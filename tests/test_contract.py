@@ -366,3 +366,27 @@ def test_one_sample_giving_two_spellings_different_values_must_stop(tmp_path):
     written.mkdir()
     (written / "prepared.csv").write_text("Samples\n")
     assert check(fixture, written) == ["conflicts"]
+
+
+# Amp review of 6374b0f: a conflicting sample must stop the run even if it would
+# have been excluded, because the contract checker inspects every sample.
+@pytest.mark.parametrize("column", ["Batch", "Injection order"])
+@pytest.mark.parametrize(
+    ("conflicting", "measured"),
+    [
+        ("H:y", True),  # excluded: no phenotype
+        ("G:z", True),  # excluded: not in keep
+        ("G:x", False),  # excluded: not measured
+    ],
+)
+def test_a_conflicting_sample_stops_the_run_even_if_excluded(
+    tmp_path, column, conflicting, measured
+):
+    factors = {"A": f"G:x | {column}:1", "S7": f"{conflicting} | {column}:1 | {column.upper()}:2"}
+    fixture = _deposit(tmp_path, factors, ["m"], "phenotype_key: G\nkeep: [x]\n")
+    if not measured:
+        data = json.loads(fixture.data.read_text())
+        del data["1"]["DATA"]["S7"]
+        fixture.data.write_text(json.dumps(data))
+    with pytest.raises(ConversionError, match="S7"):
+        reference_output(fixture, tmp_path)
