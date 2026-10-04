@@ -172,5 +172,10 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
             f"# Heads-up: no {' or '.join(missing)} factor, so those columns will be blank.",
         ]
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    try:
+        # "x" creates the file or fails, so a task saved meanwhile is never replaced.
+        with target.open("x", encoding="utf-8") as handle:
+            handle.write("\n".join(lines) + "\n")
+    except FileExistsError:
+        raise TaskError(f"{target} already exists; edit it or delete it first") from None
     return target

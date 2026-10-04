@@ -191,3 +191,21 @@ def test_control_characters_in_study_text_keep_the_draft_loadable(tmp_path, char
     path.write_text(path.read_text().replace("phenotype_key: CHOOSE", "phenotype_key: Group"))
     assert resolve_task(path, root=tmp_path).study_id == "ST000123"
     assert "titlesuffix" in path.read_text()
+
+
+def test_a_task_saved_while_drafting_is_never_overwritten(tmp_path, monkeypatch):
+    # Amp review of 70a4507: the existence check and the write must be one step.
+    from onboard.tools import factors_digest as real
+
+    root = fetched(tmp_path)
+    target = root / "tasks" / "draft-ST000123.yaml"
+
+    def save_a_task_mid_draft(records):
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("phenotype_key: AlreadySelected\n")
+        return real(records)
+
+    monkeypatch.setattr("onboard.task.factors_digest", save_a_task_mid_draft)
+    with pytest.raises(TaskError, match="already exists"):
+        draft_task("ST000123", root=root)
+    assert target.read_text() == "phenotype_key: AlreadySelected\n"
