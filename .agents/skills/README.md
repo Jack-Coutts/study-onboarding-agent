@@ -30,6 +30,7 @@ work matches; each description says when it applies.
 | [applying-poteto-mode](applying-poteto-mode/SKILL.md) | An explicitly requested, evidence-first engineering workflow |
 | [applying-ponytail-mode](applying-ponytail-mode/SKILL.md) | The smallest change that works, and reviewing changes for bloat, without cutting safety checks |
 | [unslopping-writing](unslopping-writing/SKILL.md) | Plain, precise prose without losing technical meaning or uncertainty |
+| [simplespeak](simplespeak/SKILL.md) | Restating the last message in plain, everyday language |
 | [diagnosing-bugs](diagnosing-bugs/SKILL.md) | Minimal reproductions and hypothesis-driven debugging |
 | [testing-scientific-code](testing-scientific-code/SKILL.md) | Test-first correctness, leakage invariants, and statistical validation |
 | [refactoring-safely](refactoring-safely/SKILL.md) | Behavior-preserving structural changes with equivalence evidence |
@@ -82,7 +83,7 @@ than treating a skill's description of them as a replacement.
 
 ## Sources and licenses
 
-The thirteen new skills are edited adaptations, not verbatim upstream installations.
+The fourteen new skills are edited adaptations, not verbatim upstream installations.
 Their frontmatter records sources and pinned revisions. The existing PR workflows
 record their own sources in their bodies.
 
