@@ -9,4 +9,4 @@ sample_type_column: Sample type
 batch_column: Batch
 position_column: Injection order
 feature_start_column: 8
-qc_sample_types: [blank]
+qc_sample_types: [Blank]

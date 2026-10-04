@@ -32,8 +32,16 @@ A sample is a control when its sample-type factor matches one of the task's
 keeps the deposit's spelling (`Blank`, `pool`), and `qc_sample_types` in the
 layout config lists those spellings, so the pipeline matches exactly what was
 written. Controls are kept with a blank `Phenotype` and are not filtered by the
-task's `keep` list. A deposit with two factors whose names differ only in case
-(`Batch` and `batch`) stops the converter.
+task's `keep` list.
+
+Samples may spell a technical factor differently (`Sample type` in one,
+`SAMPLE TYPE` in another). Those spellings name one column: a difference in
+case is a formatting accident, not a conflict. If one sample gives two
+spellings different values (`Batch:1 | batch:2`), that is a conflict, and the
+converter stops as it does for conflicting duplicate records. This replaced an
+earlier rule that stopped whenever two spellings appeared anywhere in a
+deposit. That rule sent studies with inconsistent capitalisation to a person
+without any evidence of a problem, and the task prompt never stated it.
 
 ## Revisit when
 

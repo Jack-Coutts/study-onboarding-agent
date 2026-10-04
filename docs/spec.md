@@ -220,7 +220,7 @@ Rules, each tied to a decision record where one exists:
 | A control is a sample whose sample-type factor matches `control_sample_types` case-insensitively. Its `Sample type` is the deposit's value as written; every other sample's is `subject` | technical columns |
 | Controls are not filtered by `keep`, and their `Phenotype` is blank even when they have a phenotype factor | technical columns |
 | `map` is applied before `keep` | |
-| Two factors whose names differ only in case and name one technical column (`Batch`, `batch`) stop the run | technical columns |
+| Technical factors spelled differently in different samples (`Batch`, `batch`) are one column; one sample giving two spellings different values stops the run | technical columns |
 | Extra factor columns are every factor key in `factors.json` except the phenotype key and the three technical factors | |
 | A sample is measured in an analysis if any of that analysis's records lists it; a measured sample missing from one record's `DATA` gets a blank cell | unmeasured samples |
 | Metabolite columns follow the analyses in priority order, then record order. `unnamed` features never count as the same metabolite across analyses | metabolite columns |
@@ -279,6 +279,10 @@ def prepare(factors_json: Path, data_json: Path, task_yaml: Path, output_dir: Pa
 
 It must also run as
 `python prepare.py --factors F --data D --task T --output DIR`.
+
+When the deposit cannot be converted (§6.1), `prepare` raises an exception
+whose message names the cause, and the command line prints that message to
+stderr and exits non-zero.
 
 It must handle any Workbench REST deposit, not only the task's study, because
 it is also run on the dev fixtures and, in evaluation, on held-out ones. Allowed

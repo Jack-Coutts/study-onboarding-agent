@@ -65,14 +65,20 @@ Rules:
 1. Identifiers are written exactly as in the deposit, as text. `01` and `1` are
    different samples. Whitespace inside an identifier is kept.
 2. If two factor records share a `local_sample_id` but disagree on any factor,
-   or one record gives the same factor two different values, stop: write nothing, print an error naming the sample to stderr, and exit
-   with a non-zero code. Identical duplicate records collapse to one.
+   or one record gives the same factor two different values, stop and write
+   nothing. Called as a function, `prepare` raises an exception whose message
+   names the sample. Run from the command line, it prints that message to
+   stderr and exits with a non-zero code. Identical duplicate records collapse
+   to one.
 3. Extra factor columns are every factor key in `factors.json` except the
    phenotype key and the technical factors in rule 4. A sample without that
    factor gets a blank cell.
 4. `Sample type`, `Batch`, and `Injection order` come only from factors with
-   the same name, matched case-insensitively. `Batch` and `Injection order` are
-   blank when no such factor exists; never invent them.
+   the same name, matched case-insensitively. Samples may spell a factor
+   differently (`Batch` in one, `batch` in another); those spellings are one
+   column. If one sample gives two spellings different values, stop as in
+   rule 2. `Batch` and `Injection order` are blank when no such factor exists;
+   never invent them.
 5. A sample is a control if its sample-type factor matches one of
    `control_sample_types`, case-insensitively. A control's `Sample type` cell is
    the deposit's value as written; every other sample's is `subject`.

@@ -325,3 +325,44 @@ def test_contract_checks_the_audit_in_the_summary(tmp_path, mutate):
     output = reference_output(fixture, tmp_path)
     rewrite_json(output / "summary.json", mutate)
     assert "summary" in check(fixture, output)
+
+
+# Technical factors spelled differently in different samples are one column
+# (decisions/technical-columns.md); one sample giving two values stops the run.
+
+
+def test_spellings_that_differ_in_case_are_one_technical_column(tmp_path):
+    fixture = _deposit(
+        tmp_path,
+        {
+            "A": "G:x | Sample type:Sample | Batch:1",
+            "B": "G:y | SAMPLE TYPE:qc | batch:2",
+            "C": "G:x | sample type:Sample | BATCH:2 | Batch:2",
+        },
+        ["m"],
+        "phenotype_key: G\ncontrol_sample_types: [QC]\n",
+    )
+    output = reference_output(fixture, tmp_path)
+    rows = [r.split(",") for r in (output / "prepared.csv").read_text().splitlines()]
+    assert rows[0][:5] == ["Samples", "Phenotype", "Sample type", "Batch", "Injection order"]
+    assert [r[:4] for r in rows[2:]] == [
+        ["A", "x", "subject", "1"],
+        ["B", "", "qc", "2"],
+        ["C", "x", "subject", "2"],
+    ]
+    assert check(fixture, output) == []
+
+
+def test_one_sample_giving_two_spellings_different_values_must_stop(tmp_path):
+    fixture = _deposit(
+        tmp_path,
+        {"A": "G:x | Batch:1", "S7": "G:y | Batch:1 | batch:2"},
+        ["m"],
+        "phenotype_key: G\n",
+    )
+    with pytest.raises(ConversionError, match="S7"):
+        reference_output(fixture, tmp_path)
+    written = tmp_path / "written"
+    written.mkdir()
+    (written / "prepared.csv").write_text("Samples\n")
+    assert check(fixture, written) == ["conflicts"]
