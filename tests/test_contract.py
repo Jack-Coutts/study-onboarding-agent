@@ -390,3 +390,53 @@ def test_a_conflicting_sample_stops_the_run_even_if_excluded(
         fixture.data.write_text(json.dumps(data))
     with pytest.raises(ConversionError, match="S7"):
         reference_output(fixture, tmp_path)
+
+
+# Decisions after the ST003412 practice run (both following the agent's tests):
+# records differing only in a technical factor's spelling are identical, and
+# duplicate_metabolites_dropped has one entry per dropped record.
+def test_records_differing_only_in_technical_spelling_are_identical(tmp_path):
+    fixture = _deposit(
+        tmp_path,
+        {"s": "Drug:A | Batch:01 | batch:01 | X:a:b"},
+        ["m"],
+        "phenotype_key: Drug\n",
+    )
+    factors = json.loads(fixture.factors.read_text())
+    factors["2"] = {"local_sample_id": "s", "factors": "X:a:b | Drug:A | BATCH:01"}
+    fixture.factors.write_text(json.dumps(factors))
+    output = reference_output(fixture, tmp_path)
+    rows = (output / "prepared.csv").read_text().splitlines()
+    assert rows[2] == "s,A,a:b,subject,01,,1"
+    assert check(fixture, output) == []
+
+
+def test_a_real_value_difference_between_records_still_conflicts(tmp_path):
+    fixture = _deposit(tmp_path, {"s": "Drug:A | Batch:01"}, ["m"], "phenotype_key: Drug\n")
+    factors = json.loads(fixture.factors.read_text())
+    factors["2"] = {"local_sample_id": "s", "factors": "Drug:A | BATCH:02"}
+    fixture.factors.write_text(json.dumps(factors))
+    with pytest.raises(ConversionError, match="'s'"):
+        reference_output(fixture, tmp_path)
+
+
+def test_every_dropped_duplicate_record_is_listed(tmp_path):
+    directory = tmp_path / "deposit"
+    directory.mkdir()
+    (directory / "factors.json").write_text(
+        json.dumps({"1": {"local_sample_id": "s", "factors": "G:x"}})
+    )
+    records = [("Z", "dup"), ("A", "dup"), ("A", "dup"), ("A", "new")]
+    data = {
+        str(i): {"analysis_id": a, "metabolite_name": m, "DATA": {"s": str(i)}}
+        for i, (a, m) in enumerate(records, 1)
+    }
+    (directory / "data.json").write_text(json.dumps(data))
+    (directory / "task.yaml").write_text("phenotype_key: G\nanalyses: [Z, A]\n")
+    fixture = Fixture(id="tmp", split="dev", directory=directory)
+    output = reference_output(fixture, tmp_path)
+    dropped = json.loads((output / "summary.json").read_text())["duplicate_metabolites_dropped"]
+    assert dropped == [{"metabolite": "dup", "analysis_id": "A", "kept_from": "Z"}] * 2
+    assert check(fixture, output) == []
+    rewrite_json(output / "summary.json", lambda s: s["duplicate_metabolites_dropped"].pop())
+    assert "summary" in check(fixture, output)

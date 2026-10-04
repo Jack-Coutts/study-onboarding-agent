@@ -1,0 +1,10 @@
+study_id: ST000001
+phenotype_key: Plant Wounding Treatment
+map:
+  Control - Non-Wounded: control
+  Wounded: wounded
+control_sample_types:
+- QC
+- PBQC
+- pool
+- blank

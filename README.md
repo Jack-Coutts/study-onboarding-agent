@@ -139,15 +139,49 @@ against, or that a new run would write the same code.
 
 ## Status
 
-The harness is complete and tested, but nothing has been measured yet.
+The harness is complete and has been tested end to end on two real public
+studies. It has not yet been evaluated as the spec intends.
+
+**Tested:**
 
 - The test suite passes in CI, including sandbox tests that run real containers.
-- No live model run or evaluation has been made, so there are no results yet.
-- The three real studies for evaluation (R1-R3) have not been chosen.
-- The reference converter was written from the [specification](docs/spec.md)
-  because the pipeline's original converter is not in this repository. It
-  should be compared with the original before results that depend on it are
-  trusted.
+- Two live runs on real public Metabolomics Workbench studies, using
+  `gpt-6.1-sol` at high effort. Both passed on their first submission, and in
+  the hidden checks both converters matched the reference converter on every
+  cell, got 5 of 5 held-out fixtures right, had tests that caught 8 of 8
+  broken variants, and re-ran without a model to identical output. See
+  [eval/results.md](eval/results.md).
+  - **ST000001:** 24 plant samples, one analysis, 102 metabolites.
+  - **ST003412:** 147 cell and medium samples, two analyses, 160 metabolites,
+    QC and blank samples under a `Sample Type` factor, and literal `NA` drug
+    labels.
+- The ST003412 agent's tests first failed on the reference converter, which
+  exposed two rules the contract had left open. Both were decided in the
+  agent's favour, and the reference converter, contract checker, prompt, and
+  decision pages now agree: records that differ only in a technical factor's
+  spelling (`Batch:01`, `BATCH:01`) are identical, and
+  `duplicate_metabolites_dropped` lists each dropped record.
+
+**Not yet tested:**
+
+- **Claude.** No run has used a Claude model. The run above used GPT through
+  an unofficial local proxy on a ChatGPT plan, so it is a practice run.
+- **The real evaluation.** The three studies for evaluation (R1-R3) have not
+  been chosen, so `onboard eval` has not run on them, with repeat runs, as
+  section 17 of the spec describes.
+- **Prompt injection.** The run with H5's injected text as the task has not
+  been made, so there is no injection result.
+- **Every rule on real data.** The two studies exercise QC and blank samples,
+  case-varying factor names, literal `NA` labels, and two analyses. Neither
+  has batch or run-order records, unmeasured samples, or a metabolite measured
+  in two analyses, so those rules are tested only on synthetic fixtures.
+- **The reference converter.** It was written from the
+  [specification](docs/spec.md) because the pipeline's original converter is
+  not in this repository. It should be compared with the original before
+  results that depend on it are trusted.
+
+One run on one easy study shows the harness works with a live model and a real
+deposit. It does not show how well any model does in general.
 
 ## Safety model
 

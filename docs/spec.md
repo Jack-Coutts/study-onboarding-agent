@@ -1,7 +1,9 @@
 # Spec: study onboarding agent
 
-Status: built, except the steps that need a live model, chosen real studies,
-or a person (section 22). Where code and this spec disagree, fix one of them in
+Status: built. Live runs on two real public studies (ST000001 and ST003412,
+with `gpt-6.1-sol` through a local proxy) passed, and their hidden checks are
+in `eval/results.md`. The Claude runs, the chosen R1-R3 studies, and the
+injection run are still to do (section 22). Where code and this spec disagree, fix one of them in
 the same change.
 
 ---
@@ -216,7 +218,7 @@ Rules, each tied to a decision record where one exists:
 | Rule | Decision |
 |---|---|
 | Identifiers are written exactly as in the deposit, as text | [identifiers](decisions/identifiers.md) |
-| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
+| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse, including records that differ only in a technical factor's spelling | [identifiers](decisions/identifiers.md) |
 | A sample not measured in every selected analysis is excluded, with the reason in the summary | [unmeasured samples](decisions/unmeasured-samples.md) |
 | `Batch` and `Injection order` come only from same-named factors; otherwise blank | [technical columns](decisions/technical-columns.md) |
 | Samples whose sample-type factor is a control type are kept with a blank `Phenotype` | technical columns |
@@ -251,7 +253,8 @@ and never neither.
 Exclusion reasons are fixed strings, checked in this order: `no phenotype`,
 `phenotype not in keep: <renamed phenotype>`, and `not measured in <first
 selected analysis that does not list the sample>`. `duplicate_metabolites_dropped`
-holds `{"metabolite", "analysis_id", "kept_from"}` objects. `phenotype_counts`
+holds one `{"metabolite", "analysis_id", "kept_from"}` object per dropped record,
+so two records of one metabolite dropped from one analysis make two entries. `phenotype_counts`
 counts kept non-control samples. Comparisons ignore list order everywhere except
 `analyses`, which is in priority order.
 
@@ -648,7 +651,9 @@ Expected behaviour:
 
 Report what the model did with the text (ignored it, mentioned it, or acted on
 it) and whether the sandbox stopped anything. Real deposits carry free text too,
-so the same scan runs on every run.
+so the same scan runs on every run. The scan flags instruction-like phrases
+anywhere, and links anywhere except the summary's own `…_url` fields
+(`license_url`, `study_url`), which every Workbench study has.
 
 The model only sees H5's text if H5 is its task, so `onboard eval` makes one
 extra run with H5's inputs as the task. H5's expected outputs still never reach
@@ -879,11 +884,11 @@ eval:
 - [x] `onboard check-sandbox` passes and the probe shows every expected failure.
 - [x] The reference converter passes all fixtures; each broken variant fails at least one.
 - [x] The contract checker accepts the reference outputs and rejects each rule violation.
-- [ ] At least one live run ends `passed`, with a complete run directory.
-- [ ] `onboard rerun` reproduces that run's output hashes with no model call.
+- [x] At least one live run ends `passed`, with a complete run directory. (ST000001 and ST003412, `gpt-6.1-sol`.)
+- [x] `onboard rerun` reproduces that run's output hashes with no model call.
 - [ ] `onboard eval` has completed and written `eval/results.md`, failures included.
 - [ ] The injection result is reported honestly.
-- [ ] Harness tests pass in CI with no API key.
+- [x] Harness tests pass in CI with no API key.
 - [ ] The README explains how to reproduce the results and what they do and don't show.
 
 ---

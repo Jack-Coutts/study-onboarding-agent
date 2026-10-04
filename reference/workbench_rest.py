@@ -118,6 +118,13 @@ def parse_factors(text: str, sample_id: str) -> dict[str, str]:
     return factors
 
 
+def _comparable(factors: dict[str, str]) -> frozenset[tuple[str, str]]:
+    """Factors as compared between duplicate records: a technical factor's spellings
+    (Batch, BATCH) name one column (decisions/technical-columns.md)."""
+    names = {column.casefold(): column for column in TECHNICAL}
+    return frozenset((names.get(key.casefold(), key), value) for key, value in factors.items())
+
+
 def read_samples(records: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
     """Sample ID to factors. Identical duplicates collapse; conflicting ones stop the run."""
     samples: dict[str, dict[str, str]] = {}
@@ -128,7 +135,7 @@ def read_samples(records: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
             raise ConversionError(f"factor record {number} has no local_sample_id")
         factors = parse_factors(_value(record.get("factors")), sample_id)
         if sample_id in samples:
-            if samples[sample_id] != factors:
+            if _comparable(samples[sample_id]) != _comparable(factors):
                 raise ConversionError(
                     f"conflicting factor records for sample {sample_id!r}: "
                     f"record {first_record[sample_id]} has {samples[sample_id]}, "
@@ -204,7 +211,7 @@ def select_features(
     measured: dict[str, set[str]] = {}
     owner: dict[str, str] = {}
     features: list[Feature] = []
-    dropped: dict[tuple[str, str], str] = {}
+    dropped: list[tuple[str, str, str]] = []
     for analysis in analyses:
         measured[analysis] = set()
         for record in by_analysis[analysis]:
@@ -215,12 +222,12 @@ def select_features(
             measured[analysis].update(values)
             name = _feature_name(record)
             if name != UNNAMED and owner.setdefault(name, analysis) != analysis:
-                dropped[(name, analysis)] = owner[name]
+                dropped.append((name, analysis, owner[name]))
                 continue
             features.append(Feature(name=name, analysis_id=analysis, values=values))
     dropped_list = [
         {"metabolite": name, "analysis_id": analysis, "kept_from": kept}
-        for (name, analysis), kept in sorted(dropped.items())
+        for name, analysis, kept in sorted(dropped)
     ]
     return features, dropped_list, measured
 

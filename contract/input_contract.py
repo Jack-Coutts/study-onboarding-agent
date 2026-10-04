@@ -129,6 +129,11 @@ def _records(document: Any) -> list[dict[str, Any]]:
     return []
 
 
+def _same_columns(factors: dict[str, str]) -> set[tuple[str, str]]:
+    canonical = {column.lower(): column for column in TECHNICAL}
+    return {(canonical.get(key.lower(), key), value) for key, value in factors.items()}
+
+
 def _canonical(value: Any) -> str:
     return json.dumps(value, sort_keys=True)
 
@@ -183,7 +188,11 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     for record in _records(json.loads(factors_json.read_text(encoding="utf-8"))):
         sample = _text(record.get("local_sample_id"))
         factors, conflicting = _factors(_text(record.get("factors")))
-        if conflicting or (sample in samples and samples[sample] != factors):
+        # Spellings of a technical factor (Batch, BATCH) name one column, so records
+        # differing only in that spelling are identical.
+        if conflicting or (
+            sample in samples and _same_columns(samples[sample]) != _same_columns(factors)
+        ):
             conflicts.append(sample)
         samples.setdefault(sample, factors)
 
@@ -195,7 +204,7 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     features: Counter[str] = Counter()
     names: list[str] = []
     values: list[dict[str, str]] = []
-    dropped: set[tuple[str, str, str]] = set()
+    dropped: list[tuple[str, str, str]] = []
     for analysis in analyses:
         for record in data:
             if _text(record.get("analysis_id")) != analysis:
@@ -205,7 +214,7 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
             name = _name(record) or "unnamed"
             # Unnamed features are never the same metabolite (decisions/metabolite-columns.md).
             if name != "unnamed" and owner.setdefault(name, analysis) != analysis:
-                dropped.add((name, analysis, owner[name]))
+                dropped.append((name, analysis, owner[name]))
                 continue
             features[analysis] += 1
             names.append(name)
