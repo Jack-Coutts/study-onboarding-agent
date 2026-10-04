@@ -226,7 +226,7 @@ def docker_sandbox(config: Config) -> DockerSandbox:
         raise SandboxError(
             "config.yaml sandbox.digest is not set; run `onboard check-sandbox --build`"
         )
-    return DockerSandbox(config.sandbox.reference, config.limits.sandbox_seconds)
+    return DockerSandbox(config.sandbox.digest, config.limits.sandbox_seconds)
 
 
 def build_image(tag: str, docker: str = "docker") -> str:

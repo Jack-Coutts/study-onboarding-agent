@@ -50,7 +50,8 @@ def submit(prepare_code: str = "def prepare(a, b, c, d):\n    pass\n") -> dict[s
     )
 
 
-def _load_variant(variant: str) -> Any:
+def load_variant(variant: str) -> Any:
+    """A broken variant as an importable module (dataclasses need it in sys.modules)."""
     import importlib.util
     import sys
     import tempfile
@@ -74,7 +75,7 @@ class FakeSandbox:
         tests_pass: bool | Callable[[Path], bool] = True,
         timeout: bool = False,
     ):
-        self.module = workbench_rest if variant is None else _load_variant(variant)
+        self.module = workbench_rest if variant is None else load_variant(variant)
         self.tests_pass = tests_pass
         self.timeout = timeout
         self.converter_runs: list[tuple[Path, Path, Path]] = []

@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import csv
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -13,8 +11,8 @@ import yaml
 
 from contract.input_contract import check_contract
 from onboard.fixtures import Fixture, list_fixtures
-from reference.broken import build_variant
 from reference.workbench_rest import ConversionError, prepare
+from tests.fakes import load_variant
 
 ALL = list_fixtures("dev") + list_fixtures("heldout")
 BY_ID = {f.id: f for f in ALL}
@@ -31,18 +29,8 @@ def reference_output(fixture: Fixture, tmp_path: Path) -> Path:
 
 
 def variant_output(variant: str, fixture: Fixture, tmp_path: Path) -> Path:
-    path = tmp_path / f"broken_{variant}.py"
-    path.write_text(build_variant(variant))
-    spec = importlib.util.spec_from_file_location(path.stem, path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[path.stem] = module  # dataclasses look their module up here
-    try:
-        spec.loader.exec_module(module)
-        output = tmp_path / variant
-        module.prepare(fixture.factors, fixture.data, fixture.task, output)
-    finally:
-        del sys.modules[path.stem]
+    output = tmp_path / variant
+    load_variant(variant).prepare(fixture.factors, fixture.data, fixture.task, output)
     return output
 
 
