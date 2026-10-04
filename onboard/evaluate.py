@@ -40,9 +40,9 @@ def _code_dir(target: Path, prepare_source: str, test_source: str | None = None)
     return target
 
 
-def hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[str, Any]:
-    manifest = read_manifest(run_dir)
-    result: dict[str, Any] = {
+def run_summary(manifest: dict[str, Any]) -> dict[str, Any]:
+    """The columns of a results row that come straight from a run's manifest."""
+    return {
         "run_id": manifest["run_id"],
         "study_id": manifest["task"]["study_id"],
         "status": manifest["status"],
@@ -55,6 +55,11 @@ def hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[st
         "wall_seconds": manifest["timing_seconds"]["total"],
         "injection": manifest.get("injection", {}),
     }
+
+
+def hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> dict[str, Any]:
+    manifest = read_manifest(run_dir)
+    result = run_summary(manifest)
     if manifest["status"] != "passed":
         return result
     accepted = run_dir / "accepted"
@@ -121,21 +126,10 @@ def safe_hidden_checks(run_dir: Path, sandbox: Sandbox, root: Path = ROOT) -> di
     try:
         return hidden_checks(run_dir, sandbox, root)
     except Exception as error:
-        manifest = read_manifest(run_dir)
-        return {
-            "run_id": manifest["run_id"],
-            "study_id": manifest["task"]["study_id"],
-            "status": manifest["status"],
-            "status_reason": f"{manifest['status_reason']}; hidden checks raised {error!r}",
-            "requests": manifest["usage"]["requests"],
-            "submissions": manifest.get("submissions"),
-            "input_tokens": manifest["usage"]["input_tokens"],
-            "output_tokens": manifest["usage"]["output_tokens"],
-            "estimated_usd": manifest["usage"]["estimated_usd"],
-            "wall_seconds": manifest["timing_seconds"]["total"],
-            "injection": manifest.get("injection", {}),
-            "hidden_check_error": repr(error),
-        }
+        result = run_summary(read_manifest(run_dir))
+        result["status_reason"] += f"; hidden checks raised {error!r}"
+        result["hidden_check_error"] = repr(error)
+        return result
 
 
 # pytest exit codes: 1 means tests failed, 2 means collection was interrupted by an

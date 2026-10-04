@@ -106,10 +106,6 @@ def _clean(directory: Path) -> Path:
     return directory
 
 
-def execution_check(execution: Execution) -> Check:
-    return Check(execution.ok, execution.summary())
-
-
 def run_fixture(
     sandbox: Sandbox, version_dir: Path, fixture: Fixture, workdir: Path
 ) -> tuple[Check, Execution]:
@@ -172,7 +168,7 @@ def development_checks(
     task_output = _clean(workdir / "task" / "output")
     execution = sandbox.run_converter(version_dir, task_inputs, task_output)
     timed_out |= execution.timed_out
-    checks["execution"] = execution_check(execution).as_dict()
+    checks["execution"] = Check(execution.ok, execution.summary()).as_dict()
 
     if execution.ok:
         try:

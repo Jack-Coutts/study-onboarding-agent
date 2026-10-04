@@ -50,11 +50,6 @@ class SandboxConfig:
     image: str
     digest: str
 
-    @property
-    def reference(self) -> str:
-        """What `docker run` is given: the image ID, so the checked image is the one used."""
-        return self.digest
-
 
 @dataclass(frozen=True)
 class Config:

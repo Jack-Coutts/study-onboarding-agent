@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from onboard.config import Config
-from onboard.model_client import ModelClient, ModelResponse, Usage
+from onboard.model_client import ModelClient, ModelResponse
 from onboard.tools import TOOL_DEFINITIONS, FinishClaim, Tools
 
 MAX_TOKENS_NOTE = (
@@ -52,7 +52,6 @@ class Outcome:
     reason: str
     finish: FinishClaim | None = None
     accepted_version: str | None = None
-    final_validation: dict[str, Any] | None = None
 
 
 @dataclass
@@ -209,23 +208,19 @@ class AgentLoop:
             )
         self.log.write("recheck", version_id=claim.version_id, validation=validation)
         if validation.get("sandbox_timed_out"):
-            return self.end(
-                "failed", "limit reached: sandbox_seconds", finish=claim, validation=validation
-            )
+            return self.end("failed", "limit reached: sandbox_seconds", finish=claim)
         if validation.get("overall") == "ok":
             return self.end(
                 "passed",
                 f"finish(complete) on {claim.version_id}; all development checks ok",
                 finish=claim,
                 accepted=claim.version_id,
-                validation=validation,
             )
         failing = [name for name, c in validation.get("checks", {}).items() if c["status"] != "ok"]
         return self.end(
             "failed",
             f"finish(complete) on {claim.version_id}, but the re-run fails {failing}",
             finish=claim,
-            validation=validation,
         )
 
     def end(
@@ -234,18 +229,7 @@ class AgentLoop:
         reason: str,
         finish: FinishClaim | None = None,
         accepted: str | None = None,
-        validation: dict[str, Any] | None = None,
         details: Any = None,
     ) -> Outcome:
         self.log.write("status", status=status, reason=reason, details=details)
-        return Outcome(status, reason, finish, accepted, validation)
-
-    @property
-    def usage(self) -> Usage:
-        a = self.accounting
-        return Usage(
-            a.input_tokens,
-            a.output_tokens,
-            a.cache_creation_input_tokens,
-            a.cache_read_input_tokens,
-        )
+        return Outcome(status, reason, finish, accepted)
