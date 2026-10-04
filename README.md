@@ -2,6 +2,12 @@
 
 [![CI](https://github.com/Jack-Coutts/study-onboarding-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/Jack-Coutts/study-onboarding-agent/actions/workflows/ci.yml)
 
+![How it works, in two lanes. The harness freezes the public study and your task file and gives them to the AI agent. The agent (1) reads the study, treating its text as data, and (2) writes a converter plus its own tests. The harness (3) checks them in a sandbox with no internet or keys, against the table rules, practice data, and the agent's tests, and sends feedback; the agent can fix and resubmit, up to 4 versions in total. The harness then (4) gives the verdict: pass, needs review, or fail. If it passed, (5) a hidden evaluation, never shown to the AI, follows. Every run is recorded, and an accepted converter re-runs without AI to identical output.](docs/figures/how-it-works.png)
+
+<sub>Figure source: `docs/figures/how-it-works.html`. To redraw it, run
+`uv run --with pillow python docs/figures/render_how_it_works.py` (needs Google
+Chrome).</sub>
+
 Can an AI coding agent safely write the code that brings a new public
 metabolomics study into an analysis pipeline, and how would you know if it got
 it wrong?
