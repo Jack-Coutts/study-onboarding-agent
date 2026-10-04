@@ -150,9 +150,9 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
         "# Optional: keep only these outcome groups (default: all)",
         "# keep: []",
         "",
-        f"# Analyses found: {_comment(', '.join(analyses), limit=200)}. Order by priority.",
-        # Dumped by the YAML library, so an analysis ID cannot add task settings.
-        "analyses: " + yaml.safe_dump(analyses, default_flow_style=True, width=10**6).strip(),
+        f"# Analyses found: {_comment(', '.join(analyses), limit=200)}.",
+        "# Without an analyses line, every analysis is used. To choose some, or set",
+        "# their priority, add one, e.g. analyses: [AN000002, AN000001]",
         "",
         "# Sample types that mark QC, pooled QC, or blank samples.",
         f"#   Sample type: {_counts(sample_types)}"

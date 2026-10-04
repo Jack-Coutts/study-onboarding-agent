@@ -167,9 +167,12 @@ phenotype key is absent), the agent should end with `needs_review` rather than
 guess.
 
 A person writes the task file. `onboard draft-task ST…` pre-fills one from a
-fetched deposit: the analyses, the factors with their value counts, and which
-technical factors exist. It never guesses the outcome; `phenotype_key` is
-`CHOOSE`, and runs refuse a task file with any `CHOOSE` value.
+fetched deposit. In comments it lists the analyses, the factors with their
+per-sample value counts, and which technical factors exist; it copies no
+deposit text into a setting. It never guesses the outcome: `phenotype_key` is
+`CHOOSE`, and runs refuse a task file with any `CHOOSE` value. A run freezes
+the task as its settings only, without comments, so text copied into the
+draft's comments never reaches the model.
 
 ### 5.3 Tasks and fixtures
 

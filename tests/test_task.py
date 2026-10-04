@@ -43,9 +43,10 @@ def test_draft_lists_the_choices_and_fills_in_only_facts(tmp_path):
     assert task == {
         "study_id": "ST000123",
         "phenotype_key": "CHOOSE",
-        "analyses": ["AN000001", "AN000002"],
         "control_sample_types": ["QC", "PBQC", "pool", "blank"],
     }
+    # Analysis IDs are listed for the person in a comment, never as a setting.
+    assert "# Analyses found: AN000001, AN000002." in text
     assert "Genotype" in text and "ko (2), wt (1)" in text
     assert "Control (2), Wounded (1)" in text
     assert "No sample-type factor" in text
@@ -98,16 +99,13 @@ def test_factor_text_cannot_add_task_settings(tmp_path, brk):
     assert set(yaml.safe_load(text)) == {
         "study_id",
         "phenotype_key",
-        "analyses",
         "control_sample_types",
     }
-    assert yaml.safe_load(text)["analyses"] == ["AN000001", "AN000002"]
     for line in text.splitlines():
         assert (
             line.startswith("#")
             or not line
-            or line.split(":")[0]
-            in {"study_id", "phenotype_key", "analyses", "control_sample_types"}
+            or line.split(":")[0] in {"study_id", "phenotype_key", "control_sample_types"}
         ), line
 
 
@@ -148,8 +146,7 @@ def test_analysis_ids_cannot_add_task_settings(tmp_path):
         opener=lambda url: json.dumps(bodies[url.rsplit("/", 1)[1]]).encode(),
     )
     task = yaml.safe_load(draft_task("ST000123", root=tmp_path).read_text())
-    assert set(task) == {"study_id", "phenotype_key", "analyses", "control_sample_types"}
-    assert task["analyses"] == ["AN000001", hostile]
+    assert set(task) == {"study_id", "phenotype_key", "control_sample_types"}
 
 
 def test_draft_counts_samples_not_records(tmp_path):
