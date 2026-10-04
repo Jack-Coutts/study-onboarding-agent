@@ -1,8 +1,8 @@
 # Spec: study onboarding agent
 
-Status: built. One live run on a real public study (ST000001, with
-`gpt-6.1-sol` through a local proxy) passed and its hidden checks are in
-`eval/results.md`. The Claude runs, the chosen R1-R3 studies, and the
+Status: built. Live runs on two real public studies (ST000001 and ST003412,
+with `gpt-6.1-sol` through a local proxy) passed, and their hidden checks are
+in `eval/results.md`. The Claude runs, the chosen R1-R3 studies, and the
 injection run are still to do (section 22). Where code and this spec disagree, fix one of them in
 the same change.
 
@@ -883,7 +883,7 @@ eval:
 - [x] `onboard check-sandbox` passes and the probe shows every expected failure.
 - [x] The reference converter passes all fixtures; each broken variant fails at least one.
 - [x] The contract checker accepts the reference outputs and rejects each rule violation.
-- [x] At least one live run ends `passed`, with a complete run directory. (ST000001, `gpt-6.1-sol`.)
+- [x] At least one live run ends `passed`, with a complete run directory. (ST000001 and ST003412, `gpt-6.1-sol`.)
 - [x] `onboard rerun` reproduces that run's output hashes with no model call.
 - [ ] `onboard eval` has completed and written `eval/results.md`, failures included.
 - [ ] The injection result is reported honestly.

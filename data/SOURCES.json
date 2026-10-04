@@ -26,6 +26,33 @@
       ],
       "licence": "CC BY 4.0",
       "retrieved_at": "2026-10-04T16:15:08+00:00"
+    },
+    "ST003412": {
+      "files": [
+        {
+          "bytes": 54298,
+          "path": "factors.json",
+          "retrieved_at": "2026-10-04T16:37:13+00:00",
+          "sha256": "d5ca365027f6c726e53afaf78e11ad1a9ee80ec9f0936f48db37590262abf97c",
+          "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST003412/factors"
+        },
+        {
+          "bytes": 1053672,
+          "path": "data.json",
+          "retrieved_at": "2026-10-04T16:37:13+00:00",
+          "sha256": "60adedc533ecd7dd5e9e41ccb052359f6d0dffcbf2cab1b7dad84fa12f45cfc1",
+          "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST003412/data"
+        },
+        {
+          "bytes": 578,
+          "path": "summary.json",
+          "retrieved_at": "2026-10-04T16:37:13+00:00",
+          "sha256": "a5652511dbd9d857fa9711dd47e7111ade8cd14253251818d776ba61b22493ff",
+          "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST003412/summary"
+        }
+      ],
+      "licence": "CC BY 4.0",
+      "retrieved_at": "2026-10-04T16:37:13+00:00"
     }
   }
 }

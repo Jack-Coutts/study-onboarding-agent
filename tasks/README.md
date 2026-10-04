@@ -4,9 +4,9 @@ Held-out tasks R1-R3 go here as `R1.yaml`, `R2.yaml`, and `R3.yaml`, one per
 public Workbench study, chosen and frozen as spec section 17.1 describes. None
 is chosen yet, so `onboard eval` stops and says so.
 
-`ST000001.yaml` is a worked example, not an evaluation slot: the task used for
-the practice run reported in `eval/results.md`. It was drafted with
-`onboard draft-task ST000001`.
+`ST000001.yaml` and `ST003412.yaml` are worked examples, not evaluation
+slots: the tasks used for the practice runs reported in `eval/results.md`.
+Both were drafted with `onboard draft-task`.
 
 Each file is a task file (spec section 5.2) whose `study_id` has been fetched
 with `onboard fetch`. `onboard draft-task ST…` writes a starting point,

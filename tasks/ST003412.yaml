@@ -1,0 +1,23 @@
+study_id: ST003412
+
+# CHOOSE the outcome to compare. Factors in this study:
+#   Drug            cerulenin (36), NA (36), TVB-2640 (36), TVB-3166 (36), - (3)
+#   Drug Treatment  NA (21), Control (18), 0.5 uM cerulenin (6), 2.0 uM cerulenin (6), 20 uM cerulenin (6), 4.0 uM cerulenin (6), 50 uM cerulenin (6), 6.0 uM cerulenin (6), 1 nM TVB-2640 (6), 200 nM TVB-2640 (6), 20 nM TVB-2640 (6), 500 nM TVB-2640 (6), 50 nM TVB-2640 (6), 5 uM TVB-2640 (6), 1 nM TVB-3166 (6), 200 nM TVB-3166 (6), 20 nM TVB-3166 (6), 500 nM TVB-3166 (6), 50 nM TVB-3166 (6), 5 uM TVB-3166 (6)
+#   Sample Type     Medium (72), Intracellular (63), Blank (8), QC (4)
+#   Sample source   BT-474 Breast cancer cells (126), NA (21)
+phenotype_key: Drug
+
+# Optional: rename outcome labels, e.g. {Healthy control: control}
+# map: {}
+# Optional: keep only these outcome groups (default: all)
+# keep: []
+
+# Analyses found: AN005604, AN005605.
+# Without an analyses line, every analysis is used. To choose some, or set
+# their priority, add one, e.g. analyses: [AN000002, AN000001]
+
+# Sample types that mark QC, pooled QC, or blank samples.
+#   Sample type: Medium (72), Intracellular (63), Blank (8), QC (4)
+control_sample_types: [QC, PBQC, pool, blank]
+
+# Heads-up: no Batch or Injection order factor, so those columns will be blank.

@@ -139,19 +139,24 @@ against, or that a new run would write the same code.
 
 ## Status
 
-The harness is complete and has been tested end to end on one real public
-study. It has not yet been evaluated as the spec intends.
+The harness is complete and has been tested end to end on two real public
+studies. It has not yet been evaluated as the spec intends.
 
 **Tested:**
 
 - The test suite passes in CI, including sandbox tests that run real containers.
-- One live run on a real public study, ST000001 from Metabolomics Workbench
-  (24 plant samples, 102 metabolites), using `gpt-6.1-sol` at high effort. It
-  passed on its first submission. In the hidden checks its output matched the
-  reference converter on all 2,592 cells, it got 5 of 5 held-out fixtures
-  right, its tests caught 8 of 8 broken variants, and the accepted converter
-  re-ran without a model to identical output. See
-  [eval/results.md](eval/results.md).
+- Two live runs on real public Metabolomics Workbench studies, using
+  `gpt-6.1-sol` at high effort. Both passed on their first submission, and in
+  the hidden checks both converters matched the reference converter on every
+  cell, got 5 of 5 held-out fixtures right, and re-ran without a model to
+  identical output. See [eval/results.md](eval/results.md).
+  - **ST000001:** 24 plant samples, one analysis, 102 metabolites. Its tests
+    caught 8 of 8 broken variants.
+  - **ST003412:** 147 cell and medium samples, two analyses, 160 metabolites,
+    QC and blank samples under a `Sample Type` factor, and literal `NA` drug
+    labels. Its tests caught none of the broken variants, because two of them
+    also fail on the reference converter. Both failures come from rules the
+    contract leaves open, described below.
 
 **Not yet tested:**
 
@@ -162,9 +167,16 @@ study. It has not yet been evaluated as the spec intends.
   section 17 of the spec describes.
 - **Prompt injection.** The run with H5's injected text as the task has not
   been made, so there is no injection result.
-- **Harder studies.** ST000001 has one analysis, no QC samples, and no batch
-  or run-order records, so it does not exercise most of the conversion rules
-  on real data. Those rules are tested only on synthetic fixtures.
+- **Every rule on real data.** The two studies exercise QC and blank samples,
+  case-varying factor names, literal `NA` labels, and two analyses. Neither
+  has batch or run-order records, unmeasured samples, or a metabolite measured
+  in two analyses, so those rules are tested only on synthetic fixtures.
+- **Two open contract questions** found by the ST003412 run's tests. Do two
+  records for one sample conflict if they spell a technical factor
+  differently with the same value (`Batch:01` and `BATCH:01`)? Does
+  `duplicate_metabolites_dropped` list each dropped record or each
+  metabolite and analysis once? The reference converter says yes and once;
+  the agent's tests said no and each.
 - **The reference converter.** It was written from the
   [specification](docs/spec.md) because the pipeline's original converter is
   not in this repository. It should be compared with the original before
