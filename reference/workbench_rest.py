@@ -102,7 +102,7 @@ def load_task(path: Path) -> Task:
     )
 
 
-def parse_factors(text: str) -> dict[str, str]:
+def parse_factors(text: str, sample_id: str) -> dict[str, str]:
     """Parse "Key:value | Key2:value2". A value may itself contain ':'."""
     factors: dict[str, str] = {}
     for part in text.split("|"):
@@ -111,7 +111,9 @@ def parse_factors(text: str) -> dict[str, str]:
         key, _, value = part.partition(":")
         key, value = key.strip(), value.strip()
         if key in factors and factors[key] != value:
-            raise ConversionError(f"factor {key!r} has two values in one record: {text!r}")
+            raise ConversionError(
+                f"sample {sample_id!r} gives factor {key!r} two values in one record: {text!r}"
+            )
         factors[key] = value
     return factors
 
@@ -124,7 +126,7 @@ def read_samples(records: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
         sample_id = _identifier(record.get("local_sample_id"))
         if not sample_id:
             raise ConversionError(f"factor record {number} has no local_sample_id")
-        factors = parse_factors(_value(record.get("factors")))
+        factors = parse_factors(_value(record.get("factors")), sample_id)
         if sample_id in samples:
             if samples[sample_id] != factors:
                 raise ConversionError(
