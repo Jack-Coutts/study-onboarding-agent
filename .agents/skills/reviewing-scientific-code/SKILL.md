@@ -1,7 +1,6 @@
 ---
 name: reviewing-scientific-code
 description: "Reviews local diffs, branches, and uncommitted changes against requirements, repository standards, scientific invariants, and privacy. Use for in-repo code-review requests that are not a GitHub PR review. For pull requests, use reviewing-prs instead."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/code-review

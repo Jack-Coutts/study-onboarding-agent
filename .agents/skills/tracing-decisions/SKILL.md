@@ -1,7 +1,6 @@
 ---
 name: tracing-decisions
 description: "Reconstructs historical rationale from decision records, Git, and related discussions with calibrated confidence. Use for why questions, threshold origins, rejected alternatives, or regression history."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/cursor/plugins/tree/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack/skills/why

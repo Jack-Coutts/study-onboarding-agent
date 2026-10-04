@@ -1,7 +1,6 @@
 ---
 name: refactoring-safely
 description: "Preserves behavior while changing code structure and proves equivalence. Use for refactors, shared-helper migrations, deduplication, module moves, and scientific pipeline restructuring."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/cursor/plugins/blob/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack/skills/poteto-mode/playbooks/refactoring.md

@@ -1,7 +1,6 @@
 ---
 name: researching-scientific-decisions
 description: "Evaluates primary-source evidence for methodological choices and their limits. Use when researching statistical methods, scientific assumptions, library behavior, or proposed analysis defaults."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/research

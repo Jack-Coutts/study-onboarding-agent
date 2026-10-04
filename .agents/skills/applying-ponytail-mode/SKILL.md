@@ -1,7 +1,6 @@
 ---
 name: applying-ponytail-mode
 description: "Builds the smallest change that works: question whether code needs to exist, reuse what is here, prefer the standard library, delete before adding. Use when asked for ponytail, lazy mode, the simplest or minimal solution, or when reviewing a change for bloat. Never simplifies away the harness's judging code or safety checks."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/DietrichGebert/ponytail/blob/c982cd411abb53323c4baa1baa3c2f020b8d0b08/skills/ponytail/SKILL.md

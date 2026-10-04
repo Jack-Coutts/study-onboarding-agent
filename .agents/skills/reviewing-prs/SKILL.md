@@ -1,7 +1,6 @@
 ---
 name: reviewing-prs
 description: Reviews pull requests and diffs in this repository for scientific correctness, implementation defects, unnecessary complexity, and test adequacy. Use when asked to review a PR, branch, or local changes; returns an evidence-backed advisory review without posting or modifying code.
-disable-model-invocation: true
 ---
 
 # Reviewing PRs

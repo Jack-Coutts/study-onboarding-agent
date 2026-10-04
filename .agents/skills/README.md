@@ -19,8 +19,9 @@ For example, ask an agent to "Read
 Ask for poteto-mode to apply the router, or unslop to apply the prose skill.
 These are natural-language triggers, not guaranteed slash-command aliases.
 In Claude Code, `.claude/skills` links to this directory, so each skill is also a
-slash command, such as `/applying-ponytail-mode`. Every skill sets
-`disable-model-invocation: true`, so an agent runs one only when asked.
+slash command, such as `/applying-ponytail-mode`. The agent also sees every
+skill's description, so it can load one when you ask in plain words or when the
+work matches; each description says when it applies.
 
 ## Skills
 

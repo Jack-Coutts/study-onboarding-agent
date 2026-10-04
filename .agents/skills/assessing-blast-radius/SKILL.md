@@ -1,7 +1,6 @@
 ---
 name: assessing-blast-radius
 description: "Traces downstream breakage beyond direct callers and executes load-bearing safety checks. Use for blast-radius questions, cross-module changes, shared preprocessing, and output-contract or tool-schema changes."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/cursor/plugins/tree/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack/skills/blast-radius
