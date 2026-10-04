@@ -3,210 +3,146 @@
 <head>
 <meta charset="utf-8">
 <title>study-onboarding-agent: how it works</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=JetBrains+Mono:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=block">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=block">
 <style>
 :root {
-  --paper: #FFFFFF;
-  --ink: #18202C;
-  --muted: #566172;
-  --line: #CAD2DD;
-  --inputs: #2E5BCB;
-  --agent: #5446C4;
-  --harness: #12806F;
-  --decide: #2D3748;
-  --hidden: #9A6A00;
-  --record: #C9651A;
-  --pass: #1E8E4E;
-  --review: #B7791F;
-  --fail: #C53030;
-  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --body: "Source Sans 3", "Segoe UI", Arial, sans-serif;
+  --ink: #0F172A;
+  --muted: #64748B;
+  --line: #E2E8F0;
+  --agent: #4F46E5;
+  --box: #0F766E;
+  --exam: #B45309;
+  --raw: #BE123C;
+  --pass: #15803D;
+  --review: #A16207;
+  --fail: #B91C1C;
+  --display: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Inter", "Segoe UI", Arial, sans-serif;
   --mono: "JetBrains Mono", Menlo, monospace;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.35; }
-.canvas { width: 1600px; padding: 16px; display: grid; }
+html, body { margin: 0; background: #fff; color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4; }
+.canvas { width: 1600px; padding: 24px 28px; display: grid; gap: 26px; }
+.label { font: 700 13px/1 var(--display); letter-spacing: .14em; text-transform: uppercase; }
+h2 { margin: 6px 0 0; font: 700 25px/1.15 var(--display); letter-spacing: -.01em; }
+p { margin: 0; color: var(--muted); }
 
-.band {
-  --hue: var(--muted);
-  border: 1.5px solid color-mix(in srgb, var(--hue) 60%, var(--line));
-  background: color-mix(in srgb, var(--hue) 6%, var(--paper));
-  border-radius: 14px; padding: 12px 16px 14px; display: grid; gap: 10px; align-content: start;
-}
-.band.hidden { border-style: dashed; border-width: 2px; }
-.inputs { --hue: var(--inputs); }
-.agent { --hue: var(--agent); }
-.harness { --hue: var(--harness); }
-.decide { --hue: var(--decide); }
-.hiddenb { --hue: var(--hidden); }
-.record { --hue: var(--record); }
+/* 1. before -> after */
+.job { display: grid; grid-template-columns: 1fr 220px 1fr; align-items: center; gap: 0; }
+.pane { border: 1.5px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 10px; }
+.raw .label { color: var(--raw); }
+.clean .label { color: var(--box); }
+.rawtext { font: 400 14px/1.65 var(--mono); color: #475569; white-space: pre; }
+.rawtext b { color: var(--raw); font-weight: 600; }
+table { border-collapse: collapse; font: 400 14px/1.5 var(--mono); }
+th, td { padding: 1px 16px 1px 0; text-align: left; }
+th { font-weight: 600; color: var(--ink); border-bottom: 1.5px solid var(--line); }
+td { color: #475569; }
+.bridge { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.bridge svg { width: 180px; height: 22px; }
+.bridge b { font: 700 18px/1.2 var(--display); color: var(--agent); }
 
-.head { display: grid; justify-items: center; gap: 2px; text-align: center; }
-.title { font-family: var(--display); font-weight: 800; font-size: 23px; color: var(--hue); margin: 0; display: flex; align-items: center; gap: 9px; }
-.badge { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--hue); color: #fff; font: 800 15px/1 var(--display); }
-.role { margin: 0; color: var(--muted); font-size: 14.5px; }
+/* 2. the AI's loop | wall | the secret exam */
+.stage { display: grid; grid-template-columns: 1fr 70px 470px; }
+.room .label { color: var(--agent); }
+.ring { position: relative; height: 430px; margin-top: 14px; }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.node { position: absolute; width: 300px; background: #fff; border: 1.5px solid #C7D2FE; border-radius: 14px; padding: 12px 15px; display: grid; gap: 4px; }
+.node h3 { margin: 0; font: 700 18px/1.2 var(--display); display: flex; align-items: center; gap: 9px; }
+.n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--agent); color: #fff; display: grid; place-items: center; font: 700 14px/1 var(--display); }
+.n1 { left: calc(50% - 150px); top: 0; }
+.n2 { right: 0; top: 160px; }
+.n3 { left: calc(50% - 150px); bottom: 0; border-color: #5EEAD4; background: #F0FDFA; }
+.n3 .n { background: var(--box); }
+.n4 { left: 0; top: 160px; }
+.hub { position: absolute; left: calc(50% - 110px); top: 140px; width: 220px; height: 150px; display: grid; place-content: center; justify-items: center; gap: 10px; text-align: center; }
+.hub b { font: 700 19px/1.2 var(--display); }
+.tries { display: flex; gap: 7px; }
+.tries i { font: 600 13px/1 var(--mono); font-style: normal; color: var(--agent); border: 1.5px solid #C7D2FE; border-radius: 7px; padding: 5px 7px; }
 
-.card {
-  background: var(--paper); border: 1.5px solid color-mix(in srgb, var(--hue) 50%, var(--line));
-  border-radius: 10px; padding: 10px 13px 11px; display: grid; gap: 4px; align-content: start;
-}
-.card.hidden { border-style: dashed; }
-.card h3 { font-family: var(--display); font-weight: 700; font-size: 17px; margin: 0; line-height: 1.15; display: flex; align-items: center; gap: 8px; }
-.card p { margin: 0; font-size: 14.5px; color: var(--muted); }
-.card ul { margin: 0; padding-left: 17px; font-size: 14.5px; display: grid; gap: 1px; }
-.icon { font-size: 19px; line-height: 1; }
-.num { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
-  font: 700 12.5px/1 var(--display); color: #fff; background: var(--hue); }
-.mono { font-family: var(--mono); font-size: 12.5px; color: var(--hue); font-weight: 700; }
+.wall { position: relative; display: grid; place-items: center; }
+.wall::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2.5px dashed #94A3B8; }
+.wall span { position: relative; writing-mode: vertical-rl; transform: rotate(180deg); background: #fff; padding: 14px 0;
+  font: 700 13px/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 
-.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-.steps { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 8px 0; align-items: stretch; }
-.arr { display: grid; place-items: center; color: var(--ink); }
-.arr svg { width: 20px; height: 14px; }
+.exam { display: grid; gap: 14px; grid-template-rows: auto auto 1fr 1fr 1fr; }
+.exam .label { color: var(--exam); }
+.item { display: grid; grid-template-columns: 64px 1fr; gap: 2px 14px; align-items: center; align-content: center; border: 1.5px dashed #F59E0B; background: #FFFBEB; border-radius: 14px; padding: 14px 16px; }
+.item .big { grid-row: span 2; font: 700 38px/1 var(--display); color: var(--exam); text-align: center; }
+.item h3 { margin: 0; font: 700 18px/1.2 var(--display); }
 
-/* the repair loop: agent | exchange arrows | harness */
-.loop { display: grid; grid-template-columns: 1fr 150px 1.08fr; align-items: stretch; }
-.exchange { display: grid; align-content: center; gap: 18px; padding: 0 6px; }
-.ex { display: grid; justify-items: center; gap: 3px; text-align: center; }
-.ex span { font-size: 13.5px; font-weight: 700; color: var(--ink); }
-.ex small { font-size: 12.5px; color: var(--muted); }
-.ex svg { width: 132px; height: 18px; }
-.retry { justify-self: center; border: 1.5px dashed color-mix(in srgb, var(--agent) 55%, var(--line)); color: var(--agent);
-  border-radius: 999px; padding: 3px 12px; font: 700 13px/1.2 var(--display); background: var(--paper); }
-
-.sandbox { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center;
-  background: var(--paper); border: 2px solid color-mix(in srgb, var(--harness) 65%, var(--line)); border-radius: 10px; padding: 9px 12px; }
-.lock { font-size: 30px; line-height: 1; }
-.sandbox h3 { margin: 0 0 6px; font: 700 17px/1.1 var(--display); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { border: 1.5px solid color-mix(in srgb, var(--harness) 55%, var(--line)); color: var(--harness);
-  border-radius: 999px; padding: 2px 10px; font: 600 13.5px/1.35 var(--body); background: color-mix(in srgb, var(--harness) 7%, var(--paper)); }
-
-/* status pills */
-.verdicts { display: flex; justify-content: center; gap: 16px; }
-.pill { display: flex; align-items: center; gap: 8px; border-radius: 999px; padding: 6px 18px 6px 8px; background: var(--paper);
-  border: 2px solid var(--c); font: 700 17px/1 var(--display); color: var(--c); }
-.pill i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; background: var(--c); color: #fff; display: grid; place-items: center; font-size: 15px; }
-.pill small { font: 600 13.5px/1.2 var(--body); color: var(--muted); }
-.p-pass { --c: var(--pass); }
-.p-review { --c: var(--review); }
-.p-fail { --c: var(--fail); }
-
-/* circles for hidden grading */
-.circles { display: flex; justify-content: center; gap: 16px; }
-.circle { width: 164px; height: 164px; border-radius: 50%; background: var(--paper);
-  border: 2px dashed color-mix(in srgb, var(--hidden) 70%, var(--line));
-  display: grid; place-content: center; text-align: center; gap: 3px; padding: 14px; }
-.circle b { font-family: var(--display); font-size: 30px; line-height: 1; color: var(--hidden); }
-.circle span { font-size: 13.5px; line-height: 1.2; }
-
-.split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
-.conn { display: grid; height: 40px; }
-.conn.c2 { grid-template-columns: 1.25fr 1fr; column-gap: 16px; }
-.cc { display: flex; justify-content: center; align-items: center; gap: 10px; color: var(--ink); }
-.cc svg { width: 14px; height: 36px; }
-.cc span { font-size: 13.5px; color: var(--muted); font-weight: 700; }
-
-.foot { display: flex; justify-content: center; gap: 28px; margin-top: 12px; font-size: 13.5px; color: var(--muted); align-items: center; }
-.foot span { display: inline-flex; align-items: center; gap: 7px; }
-.sw { width: 30px; height: 16px; border-radius: 4px; border: 2px solid var(--muted); background: var(--paper); }
-.sw.d { border-style: dashed; }
+/* 3. verdict */
+.verdict { display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; border-top: 1.5px solid var(--line); padding-top: 22px; }
+.verdict .label { color: var(--ink); }
+.stamps { display: flex; gap: 14px; }
+.stamp { border: 2.5px solid var(--c); border-radius: 10px; padding: 7px 16px; font: 700 17px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--c); }
+.s1 { --c: var(--pass); } .s2 { --c: var(--review); } .s3 { --c: var(--fail); }
+.rerun { text-align: right; }
+.rerun b { display: block; font: 700 18px/1.25 var(--display); }
+.rerun b em { font-style: normal; color: var(--pass); }
 </style>
 </head>
 <body>
 <div class="canvas" id="canvas">
 
-  <!-- 1. Inputs -->
-  <section class="band inputs">
-    <div class="head"><h2 class="title"><span class="badge">1</span>What goes in</h2></div>
-    <div class="row3">
-      <div class="card"><h3><span class="icon">🧪</span>A public study</h3><p>Raw results from Metabolomics Workbench, downloaded once and fingerprinted so every result traces back to the exact files.</p></div>
-      <div class="card"><h3><span class="icon">📝</span>A task file</h3><p>The human choices: which column is the outcome, which groups to keep, which samples are quality controls.</p></div>
-      <div class="card"><h3><span class="icon">📐</span>The table rules</h3><p>The exact layout the analysis pipeline needs. This is what the AI is judged against.</p></div>
+  <section class="job">
+    <div class="pane raw">
+      <span class="label">A public study</span>
+<div class="rawtext"><b>S01</b>  Group:case | Sample type:Sample | Batch:1
+<b>QC1</b>  Sample type:QC | Batch:1
+<b>Alanine</b>  S01: 1.5   QC1: 1.8   S03: (blank)</div>
+    </div>
+    <div class="bridge">
+      <svg viewBox="0 0 180 22"><line x1="4" y1="11" x2="160" y2="11" stroke="#4F46E5" stroke-width="3.5" stroke-linecap="round"/><polygon points="158,3 176,11 158,19" fill="#4F46E5"/></svg>
+      <b>a converter<br>written by AI</b>
+    </div>
+    <div class="pane clean">
+      <span class="label">The pipeline's table</span>
+      <table>
+        <tr><th>Samples</th><th>Phenotype</th><th>Sample type</th><th>Batch</th><th>Alanine</th></tr>
+        <tr><td>QC1</td><td></td><td>QC</td><td>1</td><td>1.8</td></tr>
+        <tr><td>S01</td><td>case</td><td>subject</td><td>1</td><td>1.5</td></tr>
+      </table>
     </div>
   </section>
 
-  <div class="conn"><div class="cc"><svg viewBox="0 0 14 36"><line x1="7" y1="2" x2="7" y2="25" stroke="currentColor" stroke-width="2.5"/><polygon points="1,24 13,24 7,34" fill="currentColor"/></svg></div></div>
-
-  <!-- 2. Repair loop -->
-  <div class="loop">
-    <section class="band agent">
-      <div class="head"><h2 class="title"><span class="badge">2</span>The AI writes code</h2><p class="role">It never grades its own work</p></div>
-      <div class="steps">
-        <div class="card"><h3><span class="num">a</span>Reads the study</h3><p>Page by page. Text from the study is treated as data, never as instructions.</p></div>
-        <span class="arr"><svg viewBox="0 0 20 14"><line x1="1" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="3"/><polygon points="11,1 19,7 11,13" fill="currentColor"/></svg></span>
-        <div class="card"><h3><span class="num">b</span>Writes a converter</h3><p>Plus its own tests: small checks meant to catch its own mistakes.</p></div>
-        <div class="card"><h3><span class="num">c</span>Asks for a check</h3><p>Then reads what passed and what didn't.</p></div>
-        <span class="arr"><svg viewBox="0 0 20 14"><line x1="1" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="3"/><polygon points="11,1 19,7 11,13" fill="currentColor"/></svg></span>
-        <div class="card"><h3><span class="num">d</span>Says "done"</h3><p>Or "needs a human" if the study can't be converted without a decision.</p></div>
+  <section class="stage">
+    <div class="room">
+      <span class="label">The AI's side</span>
+      <h2>Write, get checked, fix</h2>
+      <div class="ring">
+        <svg viewBox="0 0 900 430" preserveAspectRatio="none">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#818CF8"/></marker></defs>
+          <path d="M 610 45 A 330 175 0 0 1 760 152" fill="none" stroke="#A5B4FC" stroke-width="3" marker-end="url(#ah)"/>
+          <path d="M 760 282 A 330 175 0 0 1 610 388" fill="none" stroke="#A5B4FC" stroke-width="3" marker-end="url(#ah)"/>
+          <path d="M 290 388 A 330 175 0 0 1 140 282" fill="none" stroke="#A5B4FC" stroke-width="3" marker-end="url(#ah)"/>
+          <path d="M 140 152 A 330 175 0 0 1 290 45" fill="none" stroke="#A5B4FC" stroke-width="3" marker-end="url(#ah)"/>
+        </svg>
+        <div class="node n1"><h3><span class="n">1</span>Read the study</h3><p>treating its text as data only</p></div>
+        <div class="node n2"><h3><span class="n">2</span>Write code</h3><p>a converter plus its own tests</p></div>
+        <div class="node n3"><h3><span class="n">3</span>🔒 Sealed check</h3><p>no internet · no keys · time limit</p></div>
+        <div class="node n4"><h3><span class="n">4</span>Read feedback</h3><p>exactly what failed, then fix</p></div>
+        <div class="hub"><b>Up to 4 attempts</b><div class="tries"><i>v1</i><i>v2</i><i>v3</i><i>v4</i></div></div>
       </div>
-      <div class="retry">↻ sees what failed, fixes it, tries again (up to 4 versions)</div>
-    </section>
-
-    <div class="exchange">
-      <div class="ex"><span>submits code</span>
-        <svg viewBox="0 0 132 18"><line x1="2" y1="9" x2="118" y2="9" stroke="currentColor" stroke-width="3"/><polygon points="116,2 130,9 116,16" fill="currentColor"/></svg></div>
-      <div class="ex">
-        <svg viewBox="0 0 132 18"><line x1="14" y1="9" x2="130" y2="9" stroke="currentColor" stroke-width="3"/><polygon points="16,2 2,9 16,16" fill="currentColor"/></svg>
-        <span>check results</span><small>what passed, what didn't</small></div>
     </div>
 
-    <section class="band harness">
-      <div class="head"><h2 class="title"><span class="badge">3</span>The harness checks it</h2><p class="role">Code the AI can't see or change</p></div>
-      <div class="sandbox">
-        <span class="lock">🔒</span>
-        <div><h3>Runs in a sealed sandbox</h3>
-          <div class="chips"><span class="chip">no internet</span><span class="chip">no passwords or keys</span><span class="chip">read-only inputs</span><span class="chip">time &amp; memory limits</span></div></div>
-      </div>
-      <div class="card"><ul>
-        <li><b>Follows the table rules?</b> IDs kept exactly, nothing invented, every sample accounted for</li>
-        <li><b>Right answers on 4 practice studies?</b> compared cell by cell</li>
-        <li><b>Do its own tests pass?</b></li>
-      </ul></div>
-      <div class="card"><p>Example feedback: <span class="mono">sample S03, column Alanine: expected blank, got 0</span></p></div>
-    </section>
-  </div>
+    <div class="wall"><span>The AI can't see past here</span></div>
 
-  <div class="conn"><div class="cc"><svg viewBox="0 0 14 36"><line x1="7" y1="2" x2="7" y2="25" stroke="currentColor" stroke-width="2.5"/><polygon points="1,24 13,24 7,34" fill="currentColor"/></svg><span>the AI says "done"</span></div></div>
-
-  <!-- 4. Decision -->
-  <section class="band decide">
-    <div class="head"><h2 class="title"><span class="badge">4</span>The harness decides, not the AI</h2><p class="role">It re-runs every check itself before believing "done"</p></div>
-    <div class="verdicts">
-      <div class="pill p-pass"><i>✓</i>Passed <small>every check holds</small></div>
-      <div class="pill p-review"><i>?</i>Needs review <small>a human decision is needed</small></div>
-      <div class="pill p-fail"><i>✕</i>Failed <small>a check failed or a limit ran out</small></div>
+    <div class="exam">
+      <span class="label">The secret exam</span>
+      <h2>Graded after the run</h2>
+      <div class="item"><span class="big">✓</span><h3>Matches a trusted converter</h3><p>on real studies, cell by cell</p></div>
+      <div class="item"><span class="big">5</span><h3>Trick datasets</h3><p>one tries to talk the AI into cheating</p></div>
+      <div class="item"><span class="big">8</span><h3>Planted bugs</h3><p>real past mistakes its tests must catch</p></div>
     </div>
   </section>
 
-  <div class="conn c2">
-    <div class="cc"><svg viewBox="0 0 14 36"><line x1="7" y1="2" x2="7" y2="25" stroke="currentColor" stroke-width="2.5"/><polygon points="1,24 13,24 7,34" fill="currentColor"/></svg><span>passed runs</span></div>
-    <div class="cc"><svg viewBox="0 0 14 36"><line x1="7" y1="2" x2="7" y2="25" stroke="currentColor" stroke-width="2.5"/><polygon points="1,24 13,24 7,34" fill="currentColor"/></svg><span>every run</span></div>
-  </div>
+  <section class="verdict">
+    <div><span class="label">The verdict</span><h2>The harness decides, never the AI</h2></div>
+    <div class="stamps"><span class="stamp s1">Passed</span><span class="stamp s2">Needs review</span><span class="stamp s3">Failed</span></div>
+    <div class="rerun"><b>Every run is recorded, and<br>re-runs without AI give <em>identical</em> output</b></div>
+  </section>
 
-  <!-- 5 & 6 -->
-  <div class="split">
-    <section class="band hiddenb hidden">
-      <div class="head"><h2 class="title"><span class="badge">5</span>The secret exam</h2><p class="role">Graded after the run; the AI never sees any of it</p></div>
-      <div class="circles">
-        <div class="circle"><b>✓</b><span>same output as a trusted converter on real studies</span></div>
-        <div class="circle"><b>5</b><span>trick datasets it never saw, one trying to talk it into cheating</span></div>
-        <div class="circle"><b>8</b><span>real past bugs planted in copies of the converter: do its tests catch them?</span></div>
-      </div>
-    </section>
-
-    <section class="band record">
-      <div class="head"><h2 class="title"><span class="badge">6</span>Receipts for everything</h2><p class="role">Every result can be traced and repeated</p></div>
-      <div class="card"><h3><span class="icon">📋</span>A full record of each run</h3><p>Inputs, every version of the code, the whole conversation and the outputs, each with a fingerprint.</p></div>
-      <div class="card"><h3><span class="icon">🔁</span>Re-run with no AI at all</h3><p>The accepted converter is ordinary code. Running it again must give byte-for-byte the same output.</p></div>
-    </section>
-  </div>
-
-  <div class="foot">
-    <span><span class="sw"></span>part of every run</span>
-    <span><span class="sw d"></span>graded in secret, after the run</span>
-    <span>🔒 runs inside the sandbox</span>
-  </div>
 </div>
 </body>
 </html>
