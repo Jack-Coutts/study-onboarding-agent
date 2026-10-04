@@ -4,7 +4,7 @@ Writes ``how-it-works.png`` next to the HTML source. Run with
 ``uv run --with pillow python docs/figures/render_how_it_works.py``.
 
 Uses headless Google Chrome (override the path with ``CHROME_PATH``) and Pillow
-to trim the white margin. Output is 2.5x the 1600 px layout width, marked as
+to trim the white margin. Output is 2.5x the 1540 px layout width, marked as
 300 DPI.
 """
 
@@ -23,7 +23,7 @@ HERE = Path(__file__).resolve().parent
 SOURCE = HERE / "how-it-works.html"
 DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SCALE = 2.5
-WINDOW = (1600, 1400)
+WINDOW = (1540, 900)
 PAD = 28
 TIMEOUT_SECONDS = 120
 OUTPUT = HERE / "how-it-works.png"
