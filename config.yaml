@@ -13,12 +13,21 @@ prices_per_million_tokens:     # checked 2026-10-03; check current prices before
   # DeepSeek peak-hour rates for cache misses, so the cost limit is an upper bound.
   deepseek-flash: {input: 0.30, output: 1.20, provider: deepseek}
   deepseek-v4-pro: {input: 1.32, output: 3.96, provider: deepseek}
+  # GPT through a local CLIProxyAPI/EasyCLIProxyAPI signed in with ChatGPT. Usage
+  # counts against the ChatGPT plan, so the usd limit never triggers; the request,
+  # submission, and time limits still apply.
+  gpt-5.5: {input: 0.0, output: 0.0, provider: cliproxy}
+  gpt-6.1-sol: {input: 0.0, output: 0.0, provider: cliproxy}
 # Models without a provider use the Anthropic API. Others are called through their
 # Anthropic-compatible endpoint, with their own key and never the Anthropic one.
 providers:
   deepseek:
     base_url: https://api.deepseek.com/anthropic
     api_key_env: DEEPSEEK_API_KEY
+  cliproxy:
+    base_url: http://127.0.0.1:8317     # the proxy's listening port
+    api_key_env: CLIPROXY_API_KEY       # a client key from the proxy's access.api-keys
+    thinking: adaptive                  # without it the proxy ignores effort (runs at medium)
 sandbox:
   image: study-onboarding-runner
   # Local image ID printed by `onboard check-sandbox --build`. Runs use this ID,

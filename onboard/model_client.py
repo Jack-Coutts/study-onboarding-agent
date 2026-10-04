@@ -79,13 +79,16 @@ class AnthropicClient:
     harness's own history is never changed: the adapted copy is built per request.
     """
 
-    def __init__(self, client: Any = None, compatible: bool = False) -> None:
+    def __init__(
+        self, client: Any = None, compatible: bool = False, thinking: str | None = None
+    ) -> None:
         if client is None:
             import anthropic
 
             client = anthropic.Anthropic()
         self.client = client
         self.compatible = compatible
+        self.thinking = thinking
 
     def _adapt(
         self, tools: list[dict[str, Any]], messages: list[dict[str, Any]]
@@ -119,8 +122,13 @@ class AnthropicClient:
     ) -> ModelResponse:
         sent_tools, sent_messages = self._adapt(tools, messages)
         started = time.monotonic()
-        # Thinking stays at the model's adaptive default; effort is set explicitly.
+        # Thinking stays at the model's adaptive default unless a provider needs it
+        # sent explicitly; effort is always set explicitly.
+        extra: dict[str, Any] = {}
+        if self.thinking:
+            extra["thinking"] = {"type": self.thinking}
         response = self.client.messages.create(
+            **extra,
             model=model,
             max_tokens=max_tokens,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
@@ -167,7 +175,9 @@ def client_for(config: Config) -> AnthropicClient:
     # An explicit key stops the SDK reading ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN,
     # so Anthropic credentials are never sent to another provider.
     return AnthropicClient(
-        anthropic.Anthropic(api_key=key, base_url=provider.base_url), compatible=True
+        anthropic.Anthropic(api_key=key, base_url=provider.base_url),
+        compatible=True,
+        thinking=provider.thinking,
     )
 
 

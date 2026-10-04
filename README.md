@@ -156,6 +156,29 @@ export DEEPSEEK_API_KEY=...
 uv run onboard run fixtures/dev/D1/task.yaml --model deepseek-flash
 ```
 
+GPT can also be used through a ChatGPT subscription, via a local
+[CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) proxy such as the
+[EasyCLIProxyAPI](https://github.com/router-for-me/EasyCLIProxyAPI) desktop
+app:
+
+1. Install EasyCLIProxyAPI and sign in with ChatGPT (Codex OAuth).
+2. Set the proxy to listen on `127.0.0.1` only, so your subscription is not
+   exposed to your network. Note its port; `config.yaml` assumes 8317.
+3. Copy one of its client API keys, then run:
+
+   ```bash
+   export CLIPROXY_API_KEY=...
+   uv run onboard run fixtures/dev/D1/task.yaml --model gpt-6.1-sol --effort high
+   ```
+
+`config.yaml` lists `gpt-5.5` and `gpt-6.1-sol`. For another model, add a line
+for the name the proxy lists. The harness asks the proxy for adaptive thinking
+explicitly, because the proxy ignores the effort setting without it.
+This route is unofficial: the proxy presents itself to OpenAI as the Codex CLI,
+and it translates every request between API formats. It suits cheap practice
+runs. Usage counts against your ChatGPT plan, so the per-run cost limit does
+not apply.
+
 Results from another provider measure that provider's model, so report them
 separately from Claude runs.
 

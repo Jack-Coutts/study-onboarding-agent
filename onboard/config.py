@@ -43,6 +43,9 @@ class Provider:
     name: str
     base_url: str
     api_key_env: str
+    # Send thinking={"type": <this>} explicitly. CLIProxyAPI passes effort on to
+    # GPT only when thinking is adaptive; Anthropic and DeepSeek need nothing sent.
+    thinking: str | None = None
 
 
 @dataclass(frozen=True)
@@ -135,6 +138,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> Config:
                     name=str(name),
                     base_url=str(p["base_url"]),
                     api_key_env=str(p["api_key_env"]),
+                    thinking=str(p["thinking"]) if p.get("thinking") else None,
                 )
                 for name, p in _mapping(raw.get("providers", {}), "providers").items()
             },

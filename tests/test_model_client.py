@@ -95,18 +95,25 @@ def _with_model(model: str):
     return CONFIG.with_overrides(model=model)
 
 
-def test_deepseek_uses_only_its_own_key(monkeypatch):
+@pytest.mark.parametrize(
+    ("model", "key_env", "base_url"),
+    [
+        ("deepseek-flash", "DEEPSEEK_API_KEY", "https://api.deepseek.com/anthropic"),
+        ("gpt-5.5", "CLIPROXY_API_KEY", "http://127.0.0.1:8317"),
+    ],
+)
+def test_other_providers_use_only_their_own_key(monkeypatch, model, key_env, base_url):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-must-not-leave")
     monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "anthropic-token-must-not-leave")
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-deepseek-test")
+    monkeypatch.setenv(key_env, "provider-key-test")
     monkeypatch.delenv("ANTHROPIC_CUSTOM_HEADERS", raising=False)
 
-    client = client_for(_with_model("deepseek-flash"))
+    client = client_for(_with_model(model))
 
     assert isinstance(client, AnthropicClient) and client.compatible
     sdk = client.client
-    assert str(sdk.base_url).rstrip("/") == "https://api.deepseek.com/anthropic"
-    assert sdk.api_key == "sk-deepseek-test"
+    assert str(sdk.base_url).rstrip("/") == base_url
+    assert sdk.api_key == "provider-key-test"
     assert sdk.auth_token is None
     sent = " ".join(sdk.default_headers.values())
     assert "must-not-leave" not in sent
@@ -138,6 +145,37 @@ def test_every_priced_model_has_a_known_provider():
         CONFIG.provider(model)
 
 
+def test_subscription_models_cost_nothing_per_token():
+    price = CONFIG.price("gpt-5.5")
+    assert (price.input, price.output) == (0.0, 0.0)
+
+
 def test_deepseek_prices_are_the_peak_rates():
     price = CONFIG.price("deepseek-flash")
     assert (price.input, price.output) == (0.30, 1.20)
+
+
+def test_the_proxy_gets_explicit_adaptive_thinking_so_effort_reaches_gpt(monkeypatch):
+    # CLIProxyAPI reads output_config.effort only when thinking.type is adaptive;
+    # otherwise GPT silently runs at medium reasoning effort.
+    monkeypatch.setenv("CLIPROXY_API_KEY", "provider-key-test")
+    monkeypatch.delenv("ANTHROPIC_CUSTOM_HEADERS", raising=False)
+    client = client_for(_with_model("gpt-6.1-sol"))
+    fake = FakeAnthropic()
+    client.client = fake
+    client.create(
+        model="gpt-6.1-sol",
+        system="s",
+        tools=TOOL_DEFINITIONS,
+        messages=HISTORY,
+        max_tokens=10,
+        effort="high",
+    )
+    sent = fake.messages.calls[0]
+    assert sent["thinking"] == {"type": "adaptive"}
+    assert sent["output_config"] == {"effort": "high"}
+
+
+def test_anthropic_and_deepseek_requests_leave_thinking_at_its_default():
+    for compatible in (False, True):
+        assert "thinking" not in send(compatible=compatible)

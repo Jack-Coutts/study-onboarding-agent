@@ -106,7 +106,13 @@ Provider calls live behind a small `ModelClient` interface in one module, so
 another provider can be added without touching the loop.
 
 Other providers are reached through their Anthropic-compatible endpoint, set in
-`providers` in config (DeepSeek is configured). Each uses its own API key from
+`providers` in config. Two are configured: DeepSeek, and a local
+CLIProxyAPI proxy that serves GPT through a ChatGPT subscription. The proxy
+translates between API formats and is not an official OpenAI interface, so its
+runs are for practice, not reported results; its price is zero, so the cost
+limit does not apply to it. Requests to it set `thinking: {type: adaptive}`
+explicitly, because the proxy passes `output_config.effort` on to GPT only in
+that case and otherwise uses medium reasoning effort. Each uses its own API key from
 its own environment variable; Anthropic credentials are never sent to it. Its
 requests drop `strict` from tools and repeat a tool error in the result text,
 because DeepSeek documents `is_error` as ignored. Results from another
@@ -837,10 +843,14 @@ prices_per_million_tokens:     # check current prices before relying on these
   claude-sonnet-5-5: {input: 2.00, output: 10.00}
   deepseek-flash: {input: 0.30, output: 1.20, provider: deepseek}
   deepseek-v4-pro: {input: 1.32, output: 3.96, provider: deepseek}
+  gpt-5.5: {input: 0.0, output: 0.0, provider: cliproxy}
 providers:
   deepseek:
     base_url: https://api.deepseek.com/anthropic
     api_key_env: DEEPSEEK_API_KEY
+  cliproxy:
+    base_url: http://127.0.0.1:8317
+    api_key_env: CLIPROXY_API_KEY
 sandbox:
   image: study-onboarding-runner
   digest: sha256:REPLACE         # written by `onboard check-sandbox --build`
