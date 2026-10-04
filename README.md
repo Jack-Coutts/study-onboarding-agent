@@ -36,6 +36,59 @@ wrong. For example:
 - a batch column is filled in when the study recorded no batches;
 - two conflicting records for one sample are resolved by picking one.
 
+## Before and after
+
+This is what a converter does, shown on the practice study D1 (synthetic) with
+the converter the agent wrote in a test run.
+
+**Before.** The study, as deposited. Each sample's details are packed into one
+line of text, and measurements are stored one metabolite at a time; they are
+shown here per sample.
+
+| Sample | Factors (as written) | Alanine | Glucose | *(no name; reference name Lactic acid)* |
+|---|---|---|---|---|
+| S01 | `Group:case \| Sample type:Sample \| Batch:1 \| Injection order:3 \| Sex:F` | 1.5 | 10 | 0.5 |
+| S02 | `Group:Healthy control \| Sample type:Sample \| Batch:1 \| Injection order:1 \| Sex:M` | 2.0 | 12.5 | 0.7 |
+| S03 | `Group:case \| Sample type:Sample \| Batch:2 \| Injection order:5 \| Sex:M` | *blank* | 11 | 0.6 |
+| QC1 | `Sample type:QC \| Batch:1 \| Injection order:2` | 1.8 | 11.2 | 0.6 |
+| QC2 | `Sample type:QC \| Batch:2 \| Injection order:4` | 1.7 | *not listed* | 0.6 |
+| S04 | `Group:unknown \| Sample type:Sample \| Batch:2 \| Injection order:6 \| Sex:F` | 2.2 | 9 | 0.4 |
+
+The task file says the outcome is `Group`, renames "Healthy control" to
+`control`, keeps only `control` and `case`, and marks `QC` samples as quality
+controls.
+
+**After.** The table the pipeline reads (`prepared.csv`):
+
+| Samples | Phenotype | Sex | Sample type | Batch | Injection order | Alanine | Glucose | Lactic acid |
+|---|---|---|---|---|---|---|---|---|
+| METHOD | | | | | | AN000101 | AN000101 | AN000101 |
+| QC1 | | | QC | 1 | 2 | 1.8 | 11.2 | 0.6 |
+| QC2 | | | QC | 2 | 4 | 1.7 | | 0.6 |
+| S01 | case | F | subject | 1 | 3 | 1.5 | 10 | 0.5 |
+| S02 | control | M | subject | 1 | 1 | 2.0 | 12.5 | 0.7 |
+| S03 | case | M | subject | 2 | 5 | | 11 | 0.6 |
+
+What changed, and why each step matters:
+
+- **One row per sample, one column per metabolite**, with the packed text split
+  into columns. The `METHOD` row records which analysis each value came from.
+- **S04 is dropped, with a reason.** Its group, `unknown`, is not one of the
+  kept groups. The summary file records "phenotype not in keep: unknown", so
+  the sample is accounted for rather than silently lost.
+- **QC samples are kept** with a blank phenotype. They have no group, but the
+  pipeline needs them to correct for instrument drift.
+- **Blanks stay blank.** S03's Alanine was recorded as blank, and QC2 was
+  measured in the analysis but has no Glucose entry. Writing `0` instead would
+  tell the pipeline "measured, nothing found".
+- **The unnamed metabolite** takes its reference name, Lactic acid.
+- **Batch and run order** come only from the study's own records. When a study
+  has none, those columns stay blank rather than being invented.
+
+The converter also writes `summary.json`, which records what was kept and
+excluded and why, and `config.yaml`, which tells the pipeline where each part
+of the table is.
+
 ## How it works
 
 The agent never grades its own work.
