@@ -1,0 +1,4 @@
+# R2: four analyses with metabolites measured in more than one; injection order recorded.
+study_id: ST004133
+phenotype_key: Diet
+control_sample_types: [QC, PBQC, pool, blank]
