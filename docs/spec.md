@@ -226,7 +226,7 @@ Rules, each tied to a decision record where one exists:
 | A metabolite in several selected analyses is kept once, from the first in priority order; the dropped copies are listed | [metabolite columns](decisions/metabolite-columns.md) |
 | A metabolite name is `metabolite_name`, else `refmet_name`, else `unnamed` (an empty or all-space name counts as missing); repeats are numbered as pandas `read_csv` numbers repeated headers, without reusing a literal name | metabolite columns |
 | A blank value stays blank; a literal label `NA` is kept as text, not read as missing | |
-| Without `analyses`, every analysis in the deposit is used, sorted by analysis ID | |
+| Without `analyses`, every analysis in the deposit is used, sorted by analysis ID. An empty `analyses` list, or one naming an analysis the deposit lacks, stops the run; the harness also refuses such a task before a run starts | |
 | A control is a sample whose sample-type factor matches `control_sample_types` case-insensitively. Its `Sample type` is the deposit's value as written; every other sample's is `subject` | technical columns |
 | Controls are not filtered by `keep`, and their `Phenotype` is blank even when they have a phenotype factor | technical columns |
 | `map` is applied before `keep` | |

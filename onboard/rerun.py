@@ -33,7 +33,8 @@ def _locate(name: str, directory: Path, study_id: str, task_path: str, root: Pat
         directory / "inputs" / name,
         directory / name,
         raw_dir(study_id, root) / name,
-        Path(task_path).parent / name,
+        # A relative task path is relative to the repository, not the working directory.
+        (ROOT / task_path).parent / name,
     ]
     return next((path for path in candidates if path.is_file()), None)
 

@@ -39,11 +39,13 @@ def git_commit(root: Path = ROOT) -> str:
 
 
 def display_path(path: Path, root: Path = ROOT) -> str:
-    """A path inside the repository relative to it; never this machine's layout."""
+    """A path inside the repository, relative to it, so saved studies do not record
+    this machine's layout. A path outside the repository stays absolute: a re-run
+    needs it to find the deposit, and such a study is local by nature."""
     try:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
-        return path.name
+        return str(path.resolve())
 
 
 def input_records(task: TaskInputs, inputs_dir: Path) -> list[dict[str, Any]]:

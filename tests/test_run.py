@@ -376,3 +376,29 @@ def test_manifests_record_repository_paths_relative_to_the_repository(tmp_path):
         task, CONFIG, ScriptedClient([response("refusal")]), FakeSandbox(), root=tmp_path
     )
     assert run.manifest["task"]["path"] == "fixtures/dev/D1/task.yaml"
+
+
+# Amp review of 976b23d.
+def test_a_study_saved_from_a_task_outside_the_repository_still_reruns(tmp_path):
+    external = tmp_path / "elsewhere"
+    shutil.copytree(
+        REPO / "fixtures" / "dev" / "D1", external, ignore=shutil.ignore_patterns("expected")
+    )
+    task = resolve_task(external / "task.yaml")
+    result = run_task(task, CONFIG, ScriptedClient(script()), FakeSandbox(), root=tmp_path / "root")
+    assert result.outcome.status == "passed"
+    study = tmp_path / "root" / "studies" / "ST900001"
+    steps = rerun(study, FakeSandbox(), root=tmp_path / "root")
+    assert all(step.ok for step in steps), steps
+
+
+def test_a_relative_task_path_is_found_from_any_working_directory(tmp_path, monkeypatch):
+    result = run_fixture(tmp_path)
+    assert result.manifest["task"]["path"] == "fixtures/dev/D1/task.yaml"
+    study = tmp_path / "studies" / "ST900001"
+    # The saved study holds no deposit files, so they are found through the
+    # recorded task path, which must resolve from the repository, not the cwd.
+    assert not (study / "factors.json").exists()
+    monkeypatch.chdir(tmp_path)
+    steps = rerun(study, FakeSandbox(), root=tmp_path)
+    assert steps[0].ok, steps[0].detail

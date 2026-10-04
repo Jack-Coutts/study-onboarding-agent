@@ -209,3 +209,19 @@ def test_a_task_saved_while_drafting_is_never_overwritten(tmp_path, monkeypatch)
     with pytest.raises(TaskError, match="already exists"):
         draft_task("ST000123", root=root)
     assert target.read_text() == "phenotype_key: AlreadySelected\n"
+
+
+@pytest.mark.parametrize("analyses", ["[AN404]", "[AN000001, AN404]", "[]"])
+def test_a_task_selecting_unknown_or_no_analyses_is_refused(tmp_path, analyses):
+    # Amp review of 976b23d: converters wrote empty results for these and reported
+    # success; the harness now refuses such a task before any run.
+    root = fetched(tmp_path)
+    task = root / "tasks" / "R1.yaml"
+    task.parent.mkdir(parents=True, exist_ok=True)
+    task.write_text(f"study_id: ST000123\nphenotype_key: Treatment\nanalyses: {analyses}\n")
+    with pytest.raises(TaskError, match="analyses"):
+        resolve_task(task, root=root)
+    task.write_text(
+        "study_id: ST000123\nphenotype_key: Treatment\nanalyses: [AN000002, AN000001]\n"
+    )
+    assert resolve_task(task, root=root).study_id == "ST000123"
