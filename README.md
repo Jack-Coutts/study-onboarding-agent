@@ -139,49 +139,50 @@ against, or that a new run would write the same code.
 
 ## Status
 
-The harness is complete and has been tested end to end on two real public
-studies. It has not yet been evaluated as the spec intends.
+The harness is complete and has been evaluated on three real public studies,
+as section 17 of the spec describes. All runs so far used `gpt-6.1-sol` at
+high effort, served through a local proxy on a ChatGPT plan; the harness also
+supports Claude and DeepSeek.
 
-**Tested:**
+**Evaluation (R1-R3).** Three Metabolomics Workbench studies were chosen to
+differ in the ways that matter and frozen before any agent ran on them (see
+[tasks/README.md](tasks/README.md)). Each was run twice, plus one run with
+H5's injected text as the task. Full results are in
+[eval/results.md](eval/results.md).
 
-- The test suite passes in CI, including sandbox tests that run real containers.
-- Two live runs on real public Metabolomics Workbench studies, using
-  `gpt-6.1-sol` at high effort. Both passed on their first submission, and in
-  the hidden checks both converters matched the reference converter on every
-  cell, got 5 of 5 held-out fixtures right, had tests that caught 8 of 8
-  broken variants, and re-ran without a model to identical output. See
-  [eval/results.md](eval/results.md).
-  - **ST000001:** 24 plant samples, one analysis, 102 metabolites.
-  - **ST003412:** 147 cell and medium samples, two analyses, 160 metabolites,
-    QC and blank samples under a `Sample Type` factor, and literal `NA` drug
-    labels.
-- The ST003412 agent's tests first failed on the reference converter, which
-  exposed two rules the contract had left open. Both were decided in the
-  agent's favour, and the reference converter, contract checker, prompt, and
-  decision pages now agree: records that differ only in a technical factor's
-  spelling (`Batch:01`, `BATCH:01`) are identical, and
-  `duplicate_metabolites_dropped` lists each dropped record.
+| Measure | Result |
+|---|---|
+| Runs that passed | 6 of 6, each on its first submission |
+| Output matches the reference converter | 6 of 6, on every cell |
+| Held-out fixtures correct | 30 of 30 |
+| Broken variants caught by the agent's tests | 32 of 48 (four runs caught 8 of 8; two caught none, see below) |
+| Accepted converter re-runs without a model to identical output | 6 of 6 |
+| Injected instructions in the study text | ignored |
+
+In two runs a single test asserted the order of a list the contract says is
+unordered, so those test suites fail on the correct reference converter and no
+catch counts. The reference was not changed to fit them.
+
+Before R1-R3 were frozen, two practice studies (ST000001 and ST003412) were
+run the same way; see [eval/practice-results.md](eval/practice-results.md).
+One of them exposed two rules the contract had left open, which were then
+settled in the reference converter, contract checker, and decision pages.
 
 **Not yet tested:**
 
-- **Claude.** No run has used a Claude model. The run above used GPT through
-  an unofficial local proxy on a ChatGPT plan, so it is a practice run.
-- **The real evaluation.** The three studies for evaluation (R1-R3) have not
-  been chosen, so `onboard eval` has not run on them, with repeat runs, as
-  section 17 of the spec describes.
-- **Prompt injection.** The run with H5's injected text as the task has not
-  been made, so there is no injection result.
-- **Every rule on real data.** The two studies exercise QC and blank samples,
-  case-varying factor names, literal `NA` labels, and two analyses. Neither
-  has batch or run-order records, unmeasured samples, or a metabolite measured
-  in two analyses, so those rules are tested only on synthetic fixtures.
-- **The reference converter.** It was written from the
-  [specification](docs/spec.md) because the pipeline's original converter is
-  not in this repository. It should be compared with the original before
-  results that depend on it are trusted.
+- **Batch columns on real data.** None of the five studies records batch, so
+  that rule is tested only on synthetic fixtures. The real studies do cover
+  QC and blank samples, run order, samples missing from an analysis,
+  metabolites measured in several analyses, literal `NA` labels, and
+  case-varying factor names.
+- **The reference converter against the original.** It was written from the
+  [specification](docs/spec.md) because the pipeline's own converters are not
+  in this repository. Comparing them is
+  [issue #11](https://github.com/Jack-Coutts/study-onboarding-agent/issues/11).
 
-One run on one easy study shows the harness works with a live model and a real
-deposit. It does not show how well any model does in general.
+These results describe one model on three studies. They show that the
+harness works with a live model on real deposits, not how well models do in
+general.
 
 ## Safety model
 

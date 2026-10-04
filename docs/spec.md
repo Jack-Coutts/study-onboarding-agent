@@ -1,9 +1,9 @@
 # Spec: study onboarding agent
 
-Status: built. Live runs on two real public studies (ST000001 and ST003412,
-with `gpt-6.1-sol` through a local proxy) passed, and their hidden checks are
-in `eval/results.md`. The Claude runs, the chosen R1-R3 studies, and the
-injection run are still to do (section 22). Where code and this spec disagree, fix one of them in
+Status: built and evaluated. R1-R3 were chosen and frozen, and `onboard eval`
+ran on them with `gpt-6.1-sol` through a local proxy, including the injection
+run; results are in `eval/results.md`. Comparing the reference converter with
+the pipeline's own converters is still to do (section 13). Where code and this spec disagree, fix one of them in
 the same change.
 
 ---
@@ -886,10 +886,10 @@ eval:
 - [x] The contract checker accepts the reference outputs and rejects each rule violation.
 - [x] At least one live run ends `passed`, with a complete run directory. (ST000001 and ST003412, `gpt-6.1-sol`.)
 - [x] `onboard rerun` reproduces that run's output hashes with no model call.
-- [ ] `onboard eval` has completed and written `eval/results.md`, failures included.
-- [ ] The injection result is reported honestly.
+- [x] `onboard eval` has completed and written `eval/results.md`, failures included.
+- [x] The injection result is reported honestly.
 - [x] Harness tests pass in CI with no API key.
-- [ ] The README explains how to reproduce the results and what they do and don't show.
+- [x] The README explains how to reproduce the results and what they do and don't show.
 
 ---
 

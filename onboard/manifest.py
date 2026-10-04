@@ -38,6 +38,14 @@ def git_commit(root: Path = ROOT) -> str:
     return f"{commit}-dirty" if dirty else commit
 
 
+def display_path(path: Path, root: Path = ROOT) -> str:
+    """A path inside the repository relative to it; never this machine's layout."""
+    try:
+        return str(path.resolve().relative_to(root.resolve()))
+    except ValueError:
+        return path.name
+
+
 def input_records(task: TaskInputs, inputs_dir: Path) -> list[dict[str, Any]]:
     records = []
     for name in DEPOSIT_FILES:
@@ -73,7 +81,7 @@ def new_manifest(
         "task": {
             "study_id": task.study_id,
             "task_sha256": sha256_file(inputs_dir / "task.yaml"),
-            "path": str(task.task_path),
+            "path": display_path(task.task_path),
         },
         "inputs": input_records(task, inputs_dir),
         "config_sha256": sha256_file(config.path),

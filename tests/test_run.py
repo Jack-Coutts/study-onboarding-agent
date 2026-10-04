@@ -367,3 +367,12 @@ def test_workbench_metadata_links_are_not_flagged_as_instructions(tmp_path):
     summary["study_title"] = "see https://example.com/update"
     (inputs / "summary.json").write_text(json.dumps(summary))
     assert [f["where"] for f in suspicious_text(inputs)] == ["summary.study_title"]
+
+
+def test_manifests_record_repository_paths_relative_to_the_repository(tmp_path):
+    # An absolute path would publish the machine's directory layout in saved studies.
+    task = resolve_task(REPO / "fixtures" / "dev" / "D1" / "task.yaml")
+    run = run_task(
+        task, CONFIG, ScriptedClient([response("refusal")]), FakeSandbox(), root=tmp_path
+    )
+    assert run.manifest["task"]["path"] == "fixtures/dev/D1/task.yaml"

@@ -1,0 +1,7 @@
+study_id: ST003435
+phenotype_key: Drug Treatment
+control_sample_types:
+- QC
+- PBQC
+- pool
+- blank
