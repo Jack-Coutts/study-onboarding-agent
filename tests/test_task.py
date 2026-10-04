@@ -174,3 +174,20 @@ def test_a_factor_repeated_within_one_record_counts_once(tmp_path):
     }
     text = draft_task("ST000123", root=fetched(tmp_path, factors)).read_text()
     assert "control (1), case (1)" in text
+
+
+# Amp review of 463035c: characters YAML forbids, even in comments, must not
+# make the draft unloadable.
+@pytest.mark.parametrize("char", ["\x00", "\x07", "\x7f", "￾"])
+def test_control_characters_in_study_text_keep_the_draft_loadable(tmp_path, char):
+    factors = {"1": {"local_sample_id": "A1", "factors": f"Group:ca{char}se | No{char}te:x"}}
+    bodies = {"factors": factors, "data": DATA, "summary": {"study_title": f"title{char}suffix"}}
+    fetch_study(
+        "ST000123",
+        root=tmp_path,
+        opener=lambda url: json.dumps(bodies[url.rsplit("/", 1)[1]]).encode(),
+    )
+    path = draft_task("ST000123", root=tmp_path)
+    path.write_text(path.read_text().replace("phenotype_key: CHOOSE", "phenotype_key: Group"))
+    assert resolve_task(path, root=tmp_path).study_id == "ST000123"
+    assert "titlesuffix" in path.read_text()

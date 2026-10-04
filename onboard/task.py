@@ -83,9 +83,11 @@ def _has_mark(value: Any) -> bool:
 
 
 def _comment(text: Any, limit: int = 60) -> str:
-    """Third-party text made safe for a YAML comment: every line break, of any kind,
-    becomes a space, so the text cannot start a new line of task settings."""
-    return " ".join(str(text).split())[:limit]
+    """Third-party text made safe for a YAML comment. Every line break, of any kind,
+    becomes a space, so the text cannot start a new line of task settings, and
+    characters YAML forbids even in comments (NUL and other controls) are dropped."""
+    printable = "".join(c for c in str(text) if c.isprintable() or c.isspace())
+    return " ".join(printable.split())[:limit]
 
 
 def _counts(values: dict[str, Any]) -> str:
