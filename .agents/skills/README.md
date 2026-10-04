@@ -24,6 +24,7 @@ These are natural-language triggers, not guaranteed slash-command aliases.
 | Skill | Use it for |
 | --- | --- |
 | [applying-poteto-mode](applying-poteto-mode/SKILL.md) | An explicitly requested, evidence-first engineering workflow |
+| [applying-ponytail-mode](applying-ponytail-mode/SKILL.md) | The smallest change that works, and reviewing changes for bloat, without cutting safety checks |
 | [unslopping-writing](unslopping-writing/SKILL.md) | Plain, precise prose without losing technical meaning or uncertainty |
 | [diagnosing-bugs](diagnosing-bugs/SKILL.md) | Minimal reproductions and hypothesis-driven debugging |
 | [testing-scientific-code](testing-scientific-code/SKILL.md) | Test-first correctness, leakage invariants, and statistical validation |
@@ -77,14 +78,15 @@ than treating a skill's description of them as a replacement.
 
 ## Sources and licenses
 
-The twelve new skills are edited adaptations, not verbatim upstream installations.
+The thirteen new skills are edited adaptations, not verbatim upstream installations.
 Their frontmatter records sources and pinned revisions. The existing PR workflows
 record their own sources in their bodies.
 
 - [pstack](https://github.com/cursor/plugins/tree/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack), by Lauren Tan.
 - [Matt Pocock's skills](https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60).
+- [ponytail](https://github.com/DietrichGebert/ponytail/tree/c982cd411abb53323c4baa1baa3c2f020b8d0b08), by Dietrich Gebert.
 
-Both sources use the MIT license. Their notices are retained in
+All three sources use the MIT license. Their notices are retained in
 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Validation

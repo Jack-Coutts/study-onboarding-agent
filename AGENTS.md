@@ -41,6 +41,8 @@ check, and pytest. Webhook tests need Bun: `make webhook-tests`.
   optional. Follow only the relevant workflow, not the whole collection.
 - Use `unslopping-writing` for documentation and user-facing summaries. Use
   `applying-poteto-mode` only when that overall workflow is requested.
+  Use `applying-ponytail-mode` when asked for the simplest change or a review
+  for bloat; it never removes the judging code or safety checks below.
 - For **GitHub pull request** review, read
   `.agents/skills/reviewing-prs/SKILL.md`, and
   `.agents/skills/reviewing-pr-simplicity/SKILL.md` only as an explicit
