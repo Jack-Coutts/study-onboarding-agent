@@ -1,7 +1,6 @@
 ---
 name: unslopping-writing
 description: "Edits prose into plain, precise writing while preserving technical meaning and uncertainty. Use for unslop requests, documentation, reports, agent instructions, and verbose replies."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/cursor/plugins/tree/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack/skills/unslop

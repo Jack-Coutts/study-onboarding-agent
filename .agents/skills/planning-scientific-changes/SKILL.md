@@ -1,7 +1,6 @@
 ---
 name: planning-scientific-changes
 description: "Turns substantial scientific changes into a scoped specification and verifiable dependent slices. Use for to-spec or to-tickets requests, input migrations, analysis extensions, and multi-step implementation plans."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/to-tickets

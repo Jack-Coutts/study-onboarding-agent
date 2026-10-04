@@ -1,7 +1,6 @@
 ---
 name: diagnosing-bugs
 description: "Builds minimal reproductions and tests falsifiable hypotheses for bugs or performance regressions. Use when debugging failures, wrong numerical results, flaky behavior, or slow commands."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/diagnosing-bugs

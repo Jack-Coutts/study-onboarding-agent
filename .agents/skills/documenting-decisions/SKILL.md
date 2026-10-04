@@ -1,7 +1,6 @@
 ---
 name: documenting-decisions
 description: "Clarifies domain terms and records source-backed decisions in the project's existing documentation. Use for grill-with-docs requests, scientific decision updates, terminology disputes, or rationale documentation."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/domain-modeling

@@ -1,7 +1,6 @@
 ---
 name: applying-poteto-mode
 description: "Applies an evidence-first engineering workflow with simple code, scoped autonomy, and precise prose. Use when explicitly asked for poteto-mode or the adapted pstack style."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/cursor/plugins/tree/c47b12849e43f18d5c374c7069c744cc55b0ea00/pstack/skills/poteto-mode

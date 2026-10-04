@@ -1,7 +1,6 @@
 ---
 name: reviewing-pr-simplicity
 description: Reviews a pinned pull request in this repository for unnecessary tests, unused code, redundant abstractions, and avoidable complexity after the scientific review. Produces a separate evidence-backed simplicity comment without changing code. Use when asked for a follow-up simplicity or deslop review.
-disable-model-invocation: true
 ---
 
 # Reviewing PR simplicity

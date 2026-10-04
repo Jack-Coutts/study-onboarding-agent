@@ -1,7 +1,6 @@
 ---
 name: designing-codebase-interfaces
 description: "Designs caller contracts and ownership boundaries with simple, testable interfaces. Use for codebase-design requests, consequential API choices, shared analysis interfaces, or architecture improvement."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/codebase-design

@@ -1,7 +1,6 @@
 ---
 name: testing-scientific-code
 description: "Uses test-first development and independent oracles for scientific code. Use for TDD, numerical regression fixes, preprocessing or validation changes, and statistical benchmark design."
-disable-model-invocation: true
 license: MIT
 metadata:
   upstream: https://github.com/mattpocock/skills/tree/d81f3a183412e71a5b1e84ca21bc1a35eea03a60/skills/engineering/tdd
