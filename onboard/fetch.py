@@ -62,7 +62,7 @@ def fetch_study(
     now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> dict[str, Any]:
     """Download the three endpoints, write them, and record them in SOURCES.json."""
-    if not STUDY_ID.match(study_id):
+    if not STUDY_ID.fullmatch(study_id):
         raise FetchError(f"study ID must look like ST000123, not {study_id!r}")
     target = raw_dir(study_id, root)
     target.mkdir(parents=True, exist_ok=True)

@@ -132,3 +132,39 @@ def test_runs_refuse_choose_anywhere_in_the_values(tmp_path, unfinished):
     )
     with pytest.raises(TaskError, match=key):
         resolve_task(path, root=root)
+
+
+# Amp review of 32b52f9.
+def test_analysis_ids_cannot_add_task_settings(tmp_path):
+    hostile = "AN000001]\nanalyses: [AN000001]\nkeep: [case]\n#"
+    data = {
+        "1": {"analysis_id": "AN000001", "metabolite_name": "x", "DATA": {"A1": "1"}},
+        "2": {"analysis_id": hostile, "metabolite_name": "y", "DATA": {"A1": "2"}},
+    }
+    bodies = {"factors": FACTORS, "data": data, "summary": SUMMARY}
+    fetch_study(
+        "ST000123",
+        root=tmp_path,
+        opener=lambda url: json.dumps(bodies[url.rsplit("/", 1)[1]]).encode(),
+    )
+    task = yaml.safe_load(draft_task("ST000123", root=tmp_path).read_text())
+    assert set(task) == {"study_id", "phenotype_key", "analyses", "control_sample_types"}
+    assert task["analyses"] == ["AN000001", hostile]
+
+
+def test_draft_counts_samples_not_records(tmp_path):
+    factors = {
+        "1": {"local_sample_id": "A1", "factors": "Group:control"},
+        "2": {"local_sample_id": "A1", "factors": "Group:control"},
+        "3": {"local_sample_id": "A2", "factors": "Group:case"},
+    }
+    text = draft_task("ST000123", root=fetched(tmp_path, factors)).read_text()
+    assert "(2 samples)" in text
+    assert "control (1), case (1)" in text
+    assert "1 factor record repeats a sample" in text
+
+
+@pytest.mark.parametrize("study_id", ["../ST000123", "ST000123\nkeep: [x]", "123"])
+def test_draft_rejects_malformed_study_ids(tmp_path, study_id):
+    with pytest.raises(TaskError, match="must look like ST000123"):
+        draft_task(study_id, root=tmp_path)

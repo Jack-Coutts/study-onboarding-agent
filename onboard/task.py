@@ -11,7 +11,7 @@ from typing import Any
 import yaml
 
 from onboard.config import ROOT
-from onboard.fetch import load_sources, raw_dir, verify_frozen
+from onboard.fetch import STUDY_ID, load_sources, raw_dir, verify_frozen
 from onboard.tools import data_digest, deposit_records, factors_digest
 
 DEPOSIT_FILES = ("factors.json", "data.json", "summary.json")
@@ -90,6 +90,8 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
     It fills in facts (analyses, which technical factors exist) and never guesses
     the outcome: runs refuse the file until every CHOOSE is replaced.
     """
+    if not STUDY_ID.fullmatch(study_id):
+        raise TaskError(f"study ID must look like ST000123, not {study_id!r}")
     deposit = raw_dir(study_id, root)
     if not (deposit / "factors.json").exists():
         raise TaskError(f"{study_id} is not downloaded; run `onboard fetch {study_id}` first")
@@ -100,7 +102,15 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
     def load(name: str) -> Any:
         return json.loads((deposit / name).read_text(encoding="utf-8"))
 
-    factors = factors_digest(deposit_records(load("factors.json")))
+    # Count each sample once, as the converter does: repeated records collapse
+    # (decisions/identifiers.md). Conflicting repeats stop the run later.
+    records = deposit_records(load("factors.json"))
+    first: dict[str, Any] = {}
+    for record in records:
+        if isinstance(record, dict):
+            first.setdefault(str(record.get("local_sample_id")), record)
+    repeats = len(records) - len(first)
+    factors = factors_digest(list(first.values()))
     analyses = sorted(data_digest(deposit_records(load("data.json")))["analyses"])
     summary = load("summary.json")
     title = _comment(summary.get("study_title", ""), limit=100)
@@ -125,8 +135,9 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
         "# Optional: keep only these outcome groups (default: all)",
         "# keep: []",
         "",
-        f"# Analyses found: {', '.join(analyses)}. Order them by priority if there are several.",
-        f"analyses: [{', '.join(analyses)}]",
+        f"# Analyses found: {_comment(', '.join(analyses), limit=200)}. Order by priority.",
+        # Dumped by the YAML library, so an analysis ID cannot add task settings.
+        "analyses: " + yaml.safe_dump(analyses, default_flow_style=True, width=10**6).strip(),
         "",
         "# Sample types that mark QC, pooled QC, or blank samples.",
         f"#   Sample type: {_counts(sample_types)}"
@@ -134,6 +145,9 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
         else "# No sample-type factor in this study, so no QC or blank samples are recognised.",
         f"control_sample_types: [{', '.join(CONTROL_TYPES)}]",
     ]
+    if repeats:
+        noun = "record repeats" if repeats == 1 else "records repeat"
+        lines += ["", f"# Heads-up: {repeats} factor {noun} a sample; counts above are per sample."]
     missing = [name for name in ("Batch", "Injection order") if technical(name) is None]
     if missing:
         lines += [
