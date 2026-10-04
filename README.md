@@ -98,8 +98,14 @@ privilege escalation, a non-root user, and limits on memory, CPU, processes,
 and time. No environment variables, API keys, home directory, Docker socket, or
 copy of this repository are mounted. The harness copies back only regular
 files from the output directory and never follows links the code created.
-`onboard check-sandbox` runs a probe inside the container that must observe
-each of these protections before any run is allowed.
+Before any run is allowed, `onboard check-sandbox` runs a probe inside the
+container that must see these attempts fail: an HTTP request, writes to the
+code, input, and root directories, finding a credential in the environment,
+and starting 500 processes. It must also succeed at writing to the output and
+temporary directories. The other protections (non-root user, dropped
+capabilities, no privilege escalation, and the memory, CPU, and time limits)
+are set on the container but not tested by the probe; a separate test checks
+that a slow converter is stopped at its time limit.
 
 A container shares the host's kernel, so it is not as strong a boundary as a
 virtual machine. The design assumes an agent that makes mistakes or is misled
