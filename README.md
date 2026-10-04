@@ -168,10 +168,12 @@ app:
 
    ```bash
    export CLIPROXY_API_KEY=...
-   uv run onboard run fixtures/dev/D1/task.yaml --model gpt-5.5
+   uv run onboard run fixtures/dev/D1/task.yaml --model gpt-6.1-sol --effort high
    ```
 
-Use the model name the proxy lists; add it to `config.yaml` if it differs.
+`config.yaml` lists `gpt-5.5` and `gpt-6.1-sol`. For another model, add a line
+for the name the proxy lists. The harness asks the proxy for adaptive thinking
+explicitly, because the proxy ignores the effort setting without it.
 This route is unofficial: the proxy presents itself to OpenAI as the Codex CLI,
 and it translates every request between API formats. It suits cheap practice
 runs. Usage counts against your ChatGPT plan, so the per-run cost limit does

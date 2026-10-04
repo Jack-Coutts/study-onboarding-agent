@@ -110,7 +110,9 @@ Other providers are reached through their Anthropic-compatible endpoint, set in
 CLIProxyAPI proxy that serves GPT through a ChatGPT subscription. The proxy
 translates between API formats and is not an official OpenAI interface, so its
 runs are for practice, not reported results; its price is zero, so the cost
-limit does not apply to it. Each uses its own API key from
+limit does not apply to it. Requests to it set `thinking: {type: adaptive}`
+explicitly, because the proxy passes `output_config.effort` on to GPT only in
+that case and otherwise uses medium reasoning effort. Each uses its own API key from
 its own environment variable; Anthropic credentials are never sent to it. Its
 requests drop `strict` from tools and repeat a tool error in the result text,
 because DeepSeek documents `is_error` as ignored. Results from another
