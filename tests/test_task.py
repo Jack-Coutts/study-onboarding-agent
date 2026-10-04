@@ -168,3 +168,12 @@ def test_draft_counts_samples_not_records(tmp_path):
 def test_draft_rejects_malformed_study_ids(tmp_path, study_id):
     with pytest.raises(TaskError, match="must look like ST000123"):
         draft_task(study_id, root=tmp_path)
+
+
+def test_a_factor_repeated_within_one_record_counts_once(tmp_path):
+    factors = {
+        "1": {"local_sample_id": "A1", "factors": "Group:control | Group:control"},
+        "2": {"local_sample_id": "A2", "factors": "Group:case"},
+    }
+    text = draft_task("ST000123", root=fetched(tmp_path, factors)).read_text()
+    assert "control (1), case (1)" in text

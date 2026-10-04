@@ -55,11 +55,19 @@ def resolve_task(task_path: Path, root: Path = ROOT) -> TaskInputs:
 
 
 def freeze_inputs(task: TaskInputs, target: Path) -> Path:
-    """Copy the deposit and task into the run, read-only. Tools and the sandbox use this copy."""
+    """Copy the deposit and task into the run, read-only. Tools and the sandbox use this copy.
+
+    The task is frozen as its parsed settings only. Its comments can hold study
+    text (draft_task copies some in), and the model sees this copy, through the
+    task prompt and inspect_deposit, outside the <data> boundary.
+    """
     target.mkdir(parents=True)
     for name in DEPOSIT_FILES:
         shutil.copyfile(task.deposit_dir / name, target / name)
-    shutil.copyfile(task.task_path, target / "task.yaml")
+    settings = yaml.safe_load(task.task_yaml)
+    (target / "task.yaml").write_text(
+        yaml.safe_dump(settings, sort_keys=False, allow_unicode=True), encoding="utf-8"
+    )
     for path in target.iterdir():
         path.chmod(0o444)
     return target
@@ -104,11 +112,18 @@ def draft_task(study_id: str, root: Path = ROOT) -> Path:
 
     # Count each sample once, as the converter does: repeated records collapse
     # (decisions/identifiers.md). Conflicting repeats stop the run later.
+    # A factor repeated within one record also counts once, as the parser collapses it.
     records = deposit_records(load("factors.json"))
     first: dict[str, Any] = {}
     for record in records:
         if isinstance(record, dict):
-            first.setdefault(str(record.get("local_sample_id")), record)
+            parts = (p.partition(":") for p in str(record.get("factors") or "").split("|"))
+            unique = dict.fromkeys(f"{k.strip()}:{v.strip()}" for k, _, v in parts if k.strip())
+            sample = {
+                "local_sample_id": record.get("local_sample_id"),
+                "factors": " | ".join(unique),
+            }
+            first.setdefault(str(record.get("local_sample_id")), sample)
     repeats = len(records) - len(first)
     factors = factors_digest(list(first.values()))
     analyses = sorted(data_digest(deposit_records(load("data.json")))["analyses"])
