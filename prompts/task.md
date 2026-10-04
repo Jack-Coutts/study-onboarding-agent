@@ -69,7 +69,8 @@ Rules:
    nothing. Called as a function, `prepare` raises an exception whose message
    names the sample. Run from the command line, it prints that message to
    stderr and exits with a non-zero code. Identical duplicate records collapse
-   to one.
+   to one. Records that differ only in how a technical factor (rule 4) is
+   spelled, with the same value, are identical.
 3. Extra factor columns are every factor key in `factors.json` except the
    phenotype key and the technical factors in rule 4. A sample without that
    factor gets a blank cell.
@@ -124,8 +125,9 @@ An object with:
 - `analyses`: the selected analyses, in priority order.
 - `extra_factor_keys`: the extra factor columns, sorted.
 - `excluded_samples`: sample ID to reason.
-- `duplicate_metabolites_dropped`: a list of
+- `duplicate_metabolites_dropped`: a list with one entry per dropped record,
   `{"metabolite": name, "analysis_id": analysis it was dropped from, "kept_from": analysis kept}`.
+  Two records of the same metabolite dropped from one analysis make two entries.
 - `technical_columns_from_factors`: which of `Sample type`, `Batch`,
   `Injection order` came from a factor.
 - `blank_technical_columns`: which of `Batch`, `Injection order` are blank

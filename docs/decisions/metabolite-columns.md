@@ -8,7 +8,8 @@ Write metabolite columns in analysis priority order, then in record order within
 each analysis. A metabolite's name is `metabolite_name`, else `refmet_name`, else
 `unnamed`. A named metabolite found in several selected analyses is kept once,
 from the first analysis in priority order, and the dropped copies are listed in
-the summary. `unnamed` features are never treated as the same metabolite.
+the summary, one entry per dropped record, so the summary shows how many
+measurements were removed. `unnamed` features are never treated as the same metabolite.
 
 Repeated header names are numbered as pandas 3 `read_csv` (C parser) numbers
 them: the first copy keeps its name, and later copies become `name.1`,

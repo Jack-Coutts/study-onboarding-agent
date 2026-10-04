@@ -218,7 +218,7 @@ Rules, each tied to a decision record where one exists:
 | Rule | Decision |
 |---|---|
 | Identifiers are written exactly as in the deposit, as text | [identifiers](decisions/identifiers.md) |
-| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse | [identifiers](decisions/identifiers.md) |
+| Conflicting duplicate factor records, or one record giving a factor two values, stop the run with an error naming them; identical duplicates collapse, including records that differ only in a technical factor's spelling | [identifiers](decisions/identifiers.md) |
 | A sample not measured in every selected analysis is excluded, with the reason in the summary | [unmeasured samples](decisions/unmeasured-samples.md) |
 | `Batch` and `Injection order` come only from same-named factors; otherwise blank | [technical columns](decisions/technical-columns.md) |
 | Samples whose sample-type factor is a control type are kept with a blank `Phenotype` | technical columns |
@@ -253,7 +253,8 @@ and never neither.
 Exclusion reasons are fixed strings, checked in this order: `no phenotype`,
 `phenotype not in keep: <renamed phenotype>`, and `not measured in <first
 selected analysis that does not list the sample>`. `duplicate_metabolites_dropped`
-holds `{"metabolite", "analysis_id", "kept_from"}` objects. `phenotype_counts`
+holds one `{"metabolite", "analysis_id", "kept_from"}` object per dropped record,
+so two records of one metabolite dropped from one analysis make two entries. `phenotype_counts`
 counts kept non-control samples. Comparisons ignore list order everywhere except
 `analyses`, which is in priority order.
 

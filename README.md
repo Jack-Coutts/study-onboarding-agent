@@ -148,15 +148,19 @@ studies. It has not yet been evaluated as the spec intends.
 - Two live runs on real public Metabolomics Workbench studies, using
   `gpt-6.1-sol` at high effort. Both passed on their first submission, and in
   the hidden checks both converters matched the reference converter on every
-  cell, got 5 of 5 held-out fixtures right, and re-ran without a model to
-  identical output. See [eval/results.md](eval/results.md).
-  - **ST000001:** 24 plant samples, one analysis, 102 metabolites. Its tests
-    caught 8 of 8 broken variants.
+  cell, got 5 of 5 held-out fixtures right, had tests that caught 8 of 8
+  broken variants, and re-ran without a model to identical output. See
+  [eval/results.md](eval/results.md).
+  - **ST000001:** 24 plant samples, one analysis, 102 metabolites.
   - **ST003412:** 147 cell and medium samples, two analyses, 160 metabolites,
     QC and blank samples under a `Sample Type` factor, and literal `NA` drug
-    labels. Its tests caught none of the broken variants, because two of them
-    also fail on the reference converter. Both failures come from rules the
-    contract leaves open, described below.
+    labels.
+- The ST003412 agent's tests first failed on the reference converter, which
+  exposed two rules the contract had left open. Both were decided in the
+  agent's favour, and the reference converter, contract checker, prompt, and
+  decision pages now agree: records that differ only in a technical factor's
+  spelling (`Batch:01`, `BATCH:01`) are identical, and
+  `duplicate_metabolites_dropped` lists each dropped record.
 
 **Not yet tested:**
 
@@ -171,12 +175,6 @@ studies. It has not yet been evaluated as the spec intends.
   case-varying factor names, literal `NA` labels, and two analyses. Neither
   has batch or run-order records, unmeasured samples, or a metabolite measured
   in two analyses, so those rules are tested only on synthetic fixtures.
-- **Two open contract questions** found by the ST003412 run's tests. Do two
-  records for one sample conflict if they spell a technical factor
-  differently with the same value (`Batch:01` and `BATCH:01`)? Does
-  `duplicate_metabolites_dropped` list each dropped record or each
-  metabolite and analysis once? The reference converter says yes and once;
-  the agent's tests said no and each.
 - **The reference converter.** It was written from the
   [specification](docs/spec.md) because the pipeline's original converter is
   not in this repository. It should be compared with the original before

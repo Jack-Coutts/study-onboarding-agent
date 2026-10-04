@@ -151,42 +151,42 @@
       }
     },
     "heldout_correct": 5,
-    "tests_pass_on_reference": false,
+    "tests_pass_on_reference": true,
     "variants": {
       "B1": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B2": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B3": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B4": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B5": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B6": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B7": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       },
       "B8": {
-        "caught": false,
+        "caught": true,
         "outcome": "tests failed"
       }
     },
-    "variants_caught": 0,
+    "variants_caught": 8,
     "rerun_matches": true,
     "rerun": [
       {
@@ -202,7 +202,7 @@
       {
         "name": "tests pass",
         "ok": true,
-        "detail": "........................                                                 [100%]\n24 passed in 0.16s"
+        "detail": "........................                                                 [100%]\n24 passed in 0.15s"
       },
       {
         "name": "output hashes match",
