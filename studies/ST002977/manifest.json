@@ -1,0 +1,93 @@
+{
+  "run_id": "20261004T173329Z_2ded90",
+  "status": "passed",
+  "status_reason": "finish(complete) on v1; all development checks ok",
+  "task": {
+    "study_id": "ST002977",
+    "task_sha256": "73efb6cdbe6287d38dda6e9a72b2867defb6bb7e1963dcd58ed685e10829ab99",
+    "path": "tasks/R3.yaml"
+  },
+  "inputs": [
+    {
+      "path": "factors.json",
+      "sha256": "ca2f6580a8c41faa0f8f374310977b6f57b48684068a20904771d3ef5ec9bb31",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST002977/factors",
+      "retrieved_at": "2026-10-04T17:06:46+00:00"
+    },
+    {
+      "path": "data.json",
+      "sha256": "c4b9d7b310265bd877b34502625449ec180e00db9a49debf214eb8e3d26dfae4",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST002977/data",
+      "retrieved_at": "2026-10-04T17:06:46+00:00"
+    },
+    {
+      "path": "summary.json",
+      "sha256": "db7cafba5ed4bf4be8fd6dd9d6309d5e800dfd42b3f5085f82b7ec055b2ea7a9",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST002977/summary",
+      "retrieved_at": "2026-10-04T17:06:46+00:00"
+    }
+  ],
+  "config_sha256": "1015a11295c5feb332402a95a8cf56975f11244fd46d980aee25a53630e080e7",
+  "prompt_sha256": "1939bed179712ba5acc08bf7a77c08448191e00867587b4deaf6dbbce5f6de4f",
+  "tools_sha256": "9b5fab323722d4763cea39d5514a571cb0c4aa5ee270b6c53f65f946f0a9edbc",
+  "model": {
+    "provider": "cliproxy",
+    "base_url": "http://127.0.0.1:8317",
+    "requested": "gpt-6.1-sol",
+    "served": [
+      "gpt-6.1-sol"
+    ],
+    "effort": "high",
+    "max_tokens": 16000
+  },
+  "limits": {
+    "requests": 12,
+    "submissions": 4,
+    "wall_clock_seconds": 900.0,
+    "usd": 3.0,
+    "sandbox_seconds": 120
+  },
+  "sandbox": {
+    "image": "study-onboarding-runner",
+    "digest": "sha256:184accedaf7d6ffdd2a4fffa6c95e9f5180d9c3ea86b0c74c11a6004d8e92d14",
+    "network": "none"
+  },
+  "accepted_version": "v1",
+  "code_sha256": {
+    "prepare.py": "194c526fcbe6204e9c8bb49456992bfce20d9d458640772c648bd0e0a0a1277b",
+    "test_prepare.py": "e225fa560427546e3969a9c0263c7e54a8cba4a78ce21343126407c45e2daecf"
+  },
+  "outputs_sha256": {
+    "prepared.csv": "0e727b401f6c18cac1b0960b06ec7be5be5c0e759302d52683966c2f640818d8",
+    "summary.json": "3b4bdcc9bf6b20c2c493df2d367a916482771fc370183fc9115909b481ad5e41",
+    "config.yaml": "5d2ae97a572847ba55fa696b0495edd2b633880c39c815c9b71328dc94507799"
+  },
+  "usage": {
+    "requests": 5,
+    "input_tokens": 15684,
+    "output_tokens": 7160,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 39680,
+    "estimated_usd": 0.0
+  },
+  "timing_seconds": {
+    "total": 242.56,
+    "model": 229.31,
+    "sandbox": 12.38
+  },
+  "harness_git_commit": "63fa9326541092c48ec054a062775e403f0a00be-dirty",
+  "started_at": "2026-10-04T17:33:29+00:00",
+  "finished_at": "2026-10-04T17:37:31+00:00",
+  "finish_claim": {
+    "outcome": "complete",
+    "version_id": "v1",
+    "summary": "Submitted and validated v1 for ST002977. prepare.py provides the callable converter and CLI, preserves textual identifiers and values, detects factor conflicts before writing, retains controls subject to selected-analysis coverage, applies phenotype filtering, handles repeated metabolite headers and analysis-priority deduplication, and writes the three required files. Validation passed the deposit contract checks, all four development fixtures, and all 16 synthetic pytest tests."
+  },
+  "submissions": 1,
+  "injection": {
+    "present": false,
+    "outcome": "none present",
+    "blocked": [],
+    "evidence": []
+  }
+}

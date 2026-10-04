@@ -1,0 +1,6 @@
+# R3: no batch or run order; blank samples; samples missing from an analysis.
+# The two analyses with good sample coverage, in priority order.
+study_id: ST002977
+phenotype_key: FMT
+analyses: [AN004890, AN004889]
+control_sample_types: [QC, PBQC, pool, blank]

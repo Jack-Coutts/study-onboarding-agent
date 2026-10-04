@@ -440,3 +440,16 @@ def test_every_dropped_duplicate_record_is_listed(tmp_path):
     assert check(fixture, output) == []
     rewrite_json(output / "summary.json", lambda s: s["duplicate_metabolites_dropped"].pop())
     assert "summary" in check(fixture, output)
+
+
+@pytest.mark.parametrize("analyses", ["[AN404]", "[]"])
+def test_output_for_an_unknown_or_empty_analysis_selection_is_rejected(tmp_path, analyses):
+    # The converter must stop; writing an empty result is a violation.
+    fixture = _deposit(tmp_path, {"A": "G:x"}, ["m"], f"phenotype_key: G\nanalyses: {analyses}\n")
+    with pytest.raises(ConversionError):
+        reference_output(fixture, tmp_path)
+    written = tmp_path / "written"
+    written.mkdir()
+    assert check(fixture, written) == []
+    (written / "prepared.csv").write_text("Samples\n")
+    assert check(fixture, written) == ["conflicts"]

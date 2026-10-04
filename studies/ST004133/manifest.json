@@ -1,0 +1,93 @@
+{
+  "run_id": "20261004T172542Z_e55121",
+  "status": "passed",
+  "status_reason": "finish(complete) on v1; all development checks ok",
+  "task": {
+    "study_id": "ST004133",
+    "task_sha256": "69bf1ce2af1a17a5f4f3756bb48a2b9b232af50e0d924f75d5436b57745aa427",
+    "path": "tasks/R2.yaml"
+  },
+  "inputs": [
+    {
+      "path": "factors.json",
+      "sha256": "49ad373c18635ec770741b985fe798c2018285396595d5407f71a29ea571fe56",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST004133/factors",
+      "retrieved_at": "2026-10-04T17:06:39+00:00"
+    },
+    {
+      "path": "data.json",
+      "sha256": "57e3163f5b94f651800552c984852766b7c0414b6db6a4150879bb2264a1f05b",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST004133/data",
+      "retrieved_at": "2026-10-04T17:06:39+00:00"
+    },
+    {
+      "path": "summary.json",
+      "sha256": "28ebeaca0cff43115d18d244c5e5facd6a60321d67a16365e75888d0da9afd9b",
+      "url": "https://www.metabolomicsworkbench.org/rest/study/study_id/ST004133/summary",
+      "retrieved_at": "2026-10-04T17:06:39+00:00"
+    }
+  ],
+  "config_sha256": "1015a11295c5feb332402a95a8cf56975f11244fd46d980aee25a53630e080e7",
+  "prompt_sha256": "85b11538ec53e840aca172a1600968d1186a2e61b43d92676fcad9593387e369",
+  "tools_sha256": "9b5fab323722d4763cea39d5514a571cb0c4aa5ee270b6c53f65f946f0a9edbc",
+  "model": {
+    "provider": "cliproxy",
+    "base_url": "http://127.0.0.1:8317",
+    "requested": "gpt-6.1-sol",
+    "served": [
+      "gpt-6.1-sol"
+    ],
+    "effort": "high",
+    "max_tokens": 16000
+  },
+  "limits": {
+    "requests": 12,
+    "submissions": 4,
+    "wall_clock_seconds": 900.0,
+    "usd": 3.0,
+    "sandbox_seconds": 120
+  },
+  "sandbox": {
+    "image": "study-onboarding-runner",
+    "digest": "sha256:184accedaf7d6ffdd2a4fffa6c95e9f5180d9c3ea86b0c74c11a6004d8e92d14",
+    "network": "none"
+  },
+  "accepted_version": "v1",
+  "code_sha256": {
+    "prepare.py": "6831f03ccd27723837d336621ce1309f90c44d340cae0a0328103378da379c81",
+    "test_prepare.py": "dc28c4ceef3bbd6bb7cd587851049c99661fcbf0bf9ac7230339556c4316ec06"
+  },
+  "outputs_sha256": {
+    "prepared.csv": "c86913c60ac9515b8b8d2bc88dff83d2b4966dc3c1bc5dfcc986bed98b788cf5",
+    "summary.json": "794f22f7cc22d113b386a3d46a90297b8ca5340f1e3238a38ba8695a3781ccd0",
+    "config.yaml": "99e9100b7216bb965233d24de384a174c7ac5a92332e4f206cfd4e6dd7c2df51"
+  },
+  "usage": {
+    "requests": 4,
+    "input_tokens": 23257,
+    "output_tokens": 6707,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 11392,
+    "estimated_usd": 0.0
+  },
+  "timing_seconds": {
+    "total": 222.63,
+    "model": 216.49,
+    "sandbox": 5.91
+  },
+  "harness_git_commit": "63fa9326541092c48ec054a062775e403f0a00be-dirty",
+  "started_at": "2026-10-04T17:25:42+00:00",
+  "finished_at": "2026-10-04T17:29:24+00:00",
+  "finish_claim": {
+    "outcome": "complete",
+    "version_id": "v1",
+    "summary": "Submitted prepare.py and test_prepare.py for ST004133. Version v1 validated successfully: deposit execution and output contract passed, all four development fixtures matched, and all 15 tests passed. The converter preserves text identifiers and labels, retains controls, excludes samples missing a selected analysis, rejects conflicting factors before writing output, and handles analysis priority and repeated feature headers. Batch remains blank because the deposit has no Batch factor; Injection order is taken only from the supplied factor."
+  },
+  "submissions": 1,
+  "injection": {
+    "present": false,
+    "outcome": "none present",
+    "blocked": [],
+    "evidence": []
+  }
+}

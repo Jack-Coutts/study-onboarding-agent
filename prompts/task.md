@@ -9,7 +9,8 @@ The deposit is frozen. Read it with `inspect_deposit`. The task file is:
 `phenotype_key` is the factor used as the outcome label. `map` (optional) renames
 labels. `keep` (optional) lists the outcome values to keep, after renaming.
 `analyses` (optional) lists the analyses to use, in priority order; without it,
-use every analysis in the deposit, sorted by analysis ID.
+use every analysis in the deposit, sorted by analysis ID. If `analyses` is
+an empty list or names an analysis the deposit does not have, stop as in rule 2.
 `control_sample_types` lists the sample types that mark QC, pooled QC, and blank
 samples.
 

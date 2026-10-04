@@ -199,6 +199,9 @@ def load_deposit(factors_json: Path, data_json: Path, task_yaml: Path) -> Deposi
     data = _records(json.loads(data_json.read_text(encoding="utf-8")))
     present = sorted({_text(r.get("analysis_id")) for r in data})
     analyses = [str(a) for a in task.get("analyses") or present]
+    if "analyses" in task and (not task["analyses"] or set(analyses) - set(present)):
+        # An empty or unknown selection cannot be converted; the converter must stop.
+        conflicts.append(f"analyses {task['analyses']!r}")
     measured: dict[str, set[str]] = {a: set() for a in analyses}
     owner: dict[str, str] = {}
     features: Counter[str] = Counter()
@@ -257,8 +260,9 @@ def check_contract(
         return [
             Violation(
                 "conflicts",
-                f"samples {deposit.conflicts} have conflicting factor values; the converter "
-                "must stop with an error, not write output",
+                f"{deposit.conflicts} cannot be converted (conflicting factor values, or an "
+                "empty or unknown analysis selection); the converter must stop with an error, "
+                "not write output",
             )
         ]
     files = _load_outputs(output_dir)

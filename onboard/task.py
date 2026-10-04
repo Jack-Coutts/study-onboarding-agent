@@ -45,13 +45,31 @@ def resolve_task(task_path: Path, root: Path = ROOT) -> TaskInputs:
         raise TaskError(f"{task_path} is an unfinished draft: set {unfinished}, now {DRAFT_MARK}")
     study_id = str(task["study_id"])
     if all((task_path.parent / name).exists() for name in DEPOSIT_FILES):
-        return TaskInputs(task_path, study_id, task_path.parent, {})
-    problems = verify_frozen(study_id, root)
-    if problems:
-        raise TaskError("; ".join(problems))
-    record = load_sources(root)["studies"][study_id]
-    sources = {entry["path"]: entry for entry in record["files"]}
-    return TaskInputs(task_path, study_id, raw_dir(study_id, root), sources)
+        resolved = TaskInputs(task_path, study_id, task_path.parent, {})
+    else:
+        problems = verify_frozen(study_id, root)
+        if problems:
+            raise TaskError("; ".join(problems))
+        record = load_sources(root)["studies"][study_id]
+        sources = {entry["path"]: entry for entry in record["files"]}
+        resolved = TaskInputs(task_path, study_id, raw_dir(study_id, root), sources)
+    _check_analyses(task, resolved, task_path)
+    return resolved
+
+
+def _check_analyses(task: dict[str, Any], resolved: TaskInputs, task_path: Path) -> None:
+    """A task that selects analyses must name at least one, all present in the deposit.
+    Otherwise a converter can write an empty result and report success."""
+    if "analyses" not in task:
+        return
+    chosen = task["analyses"]
+    if not isinstance(chosen, list) or not chosen:
+        raise TaskError(f"{task_path}: analyses must list at least one analysis, or be omitted")
+    data = json.loads((resolved.deposit_dir / "data.json").read_text(encoding="utf-8"))
+    present = {str(r.get("analysis_id")) for r in deposit_records(data) if isinstance(r, dict)}
+    unknown = [str(a) for a in chosen if str(a) not in present]
+    if unknown:
+        raise TaskError(f"{task_path}: analyses {unknown} are not in the deposit {sorted(present)}")
 
 
 def freeze_inputs(task: TaskInputs, target: Path) -> Path:
