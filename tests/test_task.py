@@ -87,7 +87,7 @@ def test_runs_refuse_an_unfinished_draft(tmp_path):
 
 # Amp review of 435a7d4: deposit text must stay inside comments, and the lock
 # must find CHOOSE anywhere in the task's values.
-@pytest.mark.parametrize("brk", ["\n", "\r", " ", "\x85"])
+@pytest.mark.parametrize("brk", ["\n", "\r", "\u2028", "\x85"])
 def test_factor_text_cannot_add_task_settings(tmp_path, brk):
     factors = {
         "1": {"local_sample_id": "A1", "factors": f"Group:control | Notes:ok{brk}keep: [case] #"},
@@ -127,7 +127,8 @@ def test_runs_refuse_choose_anywhere_in_the_values(tmp_path, unfinished):
     text = path.read_text().replace("phenotype_key: CHOOSE", "phenotype_key: Treatment")
     key = unfinished.split(":")[0]
     path.write_text(
-        "\n".join(l for l in text.splitlines() if not l.startswith(f"{key}:")) + f"\n{unfinished}\n"
+        "\n".join(line for line in text.splitlines() if not line.startswith(f"{key}:"))
+        + f"\n{unfinished}\n"
     )
     with pytest.raises(TaskError, match=key):
         resolve_task(path, root=root)

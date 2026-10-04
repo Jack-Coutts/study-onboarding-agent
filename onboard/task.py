@@ -71,7 +71,7 @@ def _has_mark(value: Any) -> bool:
         return any(_has_mark(k) or _has_mark(v) for k, v in value.items())
     if isinstance(value, list):
         return any(_has_mark(item) for item in value)
-    return value == DRAFT_MARK
+    return isinstance(value, str) and value == DRAFT_MARK
 
 
 def _comment(text: Any, limit: int = 60) -> str:
