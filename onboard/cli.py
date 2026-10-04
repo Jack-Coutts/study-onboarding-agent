@@ -21,6 +21,15 @@ def _fetch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _draft_task(args: argparse.Namespace) -> int:
+    from onboard.task import draft_task
+
+    print(
+        f"wrote {draft_task(args.study_id)}; replace every CHOOSE, then save it as tasks/R<n>.yaml"
+    )
+    return 0
+
+
 def _check_sandbox(args: argparse.Namespace) -> int:
     from onboard.sandbox import check_sandbox
 
@@ -118,6 +127,10 @@ def main(argv: list[str] | None = None) -> int:
     fetch = commands.add_parser("fetch", help="download and freeze a deposit")
     fetch.add_argument("study_id")
     fetch.set_defaults(handler=_fetch)
+
+    draft = commands.add_parser("draft-task", help="pre-fill a task file from a fetched study")
+    draft.add_argument("study_id")
+    draft.set_defaults(handler=_draft_task)
 
     check = commands.add_parser("check-sandbox", help="verify the image and run the probe")
     check.add_argument("--build", action="store_true", help="rebuild and record the image ID")

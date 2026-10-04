@@ -57,10 +57,11 @@ class RunResult:
     manifest: dict[str, Any]
 
 
-def render_task_prompt(task: TaskInputs) -> str:
+def render_task_prompt(study_id: str, frozen_task: Path) -> str:
+    """The task prompt, from the frozen task: settings only, no comments."""
     template = (PROMPTS / "task.md").read_text(encoding="utf-8")
-    return template.replace("{{STUDY_ID}}", task.study_id).replace(
-        "{{TASK_YAML}}", task.task_yaml.strip()
+    return template.replace("{{STUDY_ID}}", study_id).replace(
+        "{{TASK_YAML}}", frozen_task.read_text(encoding="utf-8").strip()
     )
 
 
@@ -84,7 +85,7 @@ def run_task(
     run_id, run_dir = new_run_dir(root)
     inputs_dir = freeze_inputs(task, run_dir / "inputs")
     system_prompt = (PROMPTS / "system.md").read_text(encoding="utf-8")
-    task_prompt = render_task_prompt(task)
+    task_prompt = render_task_prompt(task.study_id, inputs_dir / "task.yaml")
     manifest = new_manifest(
         run_id, config, task, inputs_dir, system_prompt, task_prompt, sandbox.image
     )

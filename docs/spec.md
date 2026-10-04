@@ -166,6 +166,14 @@ If the deposit makes a task choice impossible or ambiguous (for example, the
 phenotype key is absent), the agent should end with `needs_review` rather than
 guess.
 
+A person writes the task file. `onboard draft-task ST…` pre-fills one from a
+fetched deposit. In comments it lists the analyses, the factors with their
+per-sample value counts, and which technical factors exist; it copies no
+deposit text into a setting. It never guesses the outcome: `phenotype_key` is
+`CHOOSE`, and runs refuse a task file with any `CHOOSE` value. A run freezes
+the task as its settings only, without comments, so text copied into the
+draft's comments never reaches the model.
+
 ### 5.3 Tasks and fixtures
 
 | ID | Kind | Split | Exercises |
@@ -762,6 +770,7 @@ be wrong too. Failures are reported, not hidden.
 | Command | Does |
 |---|---|
 | `onboard fetch ST…` | Download and freeze a deposit; update `data/SOURCES.json` |
+| `onboard draft-task ST…` | Pre-fill `tasks/draft-ST….yaml` from a fetched deposit, for a person to finish |
 | `onboard check-sandbox` | Build or verify the image; run the isolation probe |
 | `onboard run TASK.yaml [--model M] [--effort E]` | One agent run |
 | `onboard eval` | Runs on R1–R3 plus hidden checks; writes `eval/results.md` |

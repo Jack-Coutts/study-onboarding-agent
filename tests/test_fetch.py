@@ -57,7 +57,7 @@ def test_verify_frozen_reports_an_unfetched_study(tmp_path):
     assert "not recorded" in verify_frozen("ST000999", root=tmp_path)[0]
 
 
-@pytest.mark.parametrize("study_id", ["123", "ST12", "ST000123/../x"])
+@pytest.mark.parametrize("study_id", ["123", "ST12", "ST000123/../x", "ST000123\n"])
 def test_fetch_rejects_malformed_study_ids(tmp_path, study_id):
     with pytest.raises(FetchError):
         fetch_study(study_id, root=tmp_path, opener=opener)
