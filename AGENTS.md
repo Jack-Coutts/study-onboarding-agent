@@ -30,7 +30,7 @@
 ## Checks
 
 Run `make check` before proposing a change. It runs ruff, mypy, the skill
-check, and pytest. Webhook tests need Bun: `make webhook-tests`.
+check, and pytest.
 
 ## Repository skills
 

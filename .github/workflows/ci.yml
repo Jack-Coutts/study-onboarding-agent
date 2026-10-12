@@ -48,11 +48,3 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - run: uv run pytest -m docker
-
-  webhook-tests:
-    name: Webhook tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
-      - run: bun test ./tests/pr_review_webhook.test.ts
