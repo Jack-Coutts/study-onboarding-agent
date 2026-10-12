@@ -32,8 +32,7 @@ skill check, and pytest. Target pytest tests first, then broaden.
 
 Tests use synthetic fixtures and a fake model client. Docker-backed tests skip
 when Docker is unavailable, so report actual sandbox coverage explicitly rather
-than inferring it from a green suite. Webhook tests need Bun
-(`make webhook-tests`).
+than inferring it from a green suite.
 
 Live model runs cost money. Do not start one as part of a review or test run
 unless asked.

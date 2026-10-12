@@ -307,13 +307,10 @@ See the [data policy](docs/data_policy.md).
 make check          # ruff, mypy, skill check, and tests
 make docker-tests   # sandbox tests; `make check` skips them without Docker
 make hooks          # run ruff before every commit
-make webhook-tests  # tests for the review webhook; needs Bun
 ```
 
 CI runs these on every pull request, with the sandbox tests in a separate job.
 Tests use a scripted model client, so they need no API key.
 
 Coding agents working on this repository follow [AGENTS.md](AGENTS.md) and the
-workflows in [`.agents/skills/`](.agents/skills/README.md). Pull requests
-labelled `ready for review` get an automated review through an
-[Amp plugin](.amp/plugins/pr-review.md).
+workflows in [`.agents/skills/`](.agents/skills/README.md).
